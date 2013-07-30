@@ -809,7 +809,7 @@ uint16_t hal_nrf_read_multibyte_reg(uint8_t reg, uint8_t *pbuf)
 {
   uint8_t ctr, length;
   uint8_t memtype;
-  uint8_t read_byte; /*lint -esym(530,read_byte) symbol not initialized*/
+  uint8_t read_byte = 0; /*lint -esym(530,read_byte) symbol not initialized*/
   bool first_round;
   first_round = true;
 

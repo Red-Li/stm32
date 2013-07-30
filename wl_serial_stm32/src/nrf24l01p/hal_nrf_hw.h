@@ -81,9 +81,6 @@
 #define pdata
 #define xdata
 
-#ifdef SET_BIT
-#undef SET_BIT
-#endif
 
 #endif // HAL_NRF_L01_H__
 
