@@ -281,6 +281,8 @@ uint8_t hal_nrf_get_rx_payload_width(uint8_t pipe_num);
 */
 void hal_nrf_set_operation_mode(hal_nrf_operation_mode_t op_mode);
 
+hal_nrf_operation_mode_t hal_nrf_get_operation_mode();
+
 /** Set radio's power mode.
  * Use this function to power_up or power_down radio.
  *

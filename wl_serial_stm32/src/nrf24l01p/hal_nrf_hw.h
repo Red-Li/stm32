@@ -20,6 +20,8 @@
 #define NRF24_CSN_PIN  GPIO_Pin_12
 #define NRF24_IRQ_GPIO GPIOA
 #define NRF24_IRQ_PIN  GPIO_Pin_0
+#define NRF24_IRQ      EXTI0_IRQn
+#define NRF24_IRQ_LINE EXTI_Line0
 #define NRF24_CE_GPIO  GPIOB
 #define NRF24_CE_PIN   GPIO_Pin_1
 #define NRF24_SPI      SPI2
@@ -27,6 +29,8 @@
 #define CSN_STATE() GPIO_ReadOutputDataBit(NRF24_CSN_GPIO, NRF24_CSN_PIN)
 #define CE_STATE() GPIO_ReadOutputDataBit(NRF24_CE_GPIO, NRF24_CE_PIN)
 
+#define NRF24_IRQ_DISABLE()     disable_irq(NRF24_IRQ)
+#define NRF24_IRQ_ENABLE()      enable_irq(NRF24_IRQ)
 
 /** Macro that set radio's CSN line LOW.
  *
@@ -81,6 +85,7 @@
 #define pdata
 #define xdata
 
+void hal_nrf_hw_init();
 
 #endif // HAL_NRF_L01_H__
 

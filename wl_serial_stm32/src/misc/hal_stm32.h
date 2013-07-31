@@ -27,6 +27,10 @@ typedef uint64_t hal_time_t;
 void systick_interrupt_handler();
 
 hal_time_t hal_time(); //return us
+
+void hal_srand(uint32_t seed);
+uint32_t hal_rand();
+
 //return t1 - t0
 #define hal_time_diff(t0, t1) ((t1) - (t0))
 

@@ -14,4 +14,4 @@
 
 
 STM32_MAP_INT_FUNC(SysTick_Handler, systick_interrupt_handler)
-
+STM32_MAP_INT_FUNC(EXTI0_IRQHandler, wls_nrf24_interrupt_handler)

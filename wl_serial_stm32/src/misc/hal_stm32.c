@@ -89,6 +89,23 @@ hal_time_t hal_time()
 }
 
 
+static uint32_t s_rand_seed = 0;
+void hal_srand(uint32_t seed)
+{
+    if(seed == (uint32_t)-1)
+        s_rand_seed = hal_time();
+    else
+        s_rand_seed = seed;
+}
+
+//http://stackoverflow.com/questions/6275593/how-to-write-you-own-random-number-algorithm
+uint32_t hal_rand()
+{
+    return s_rand_seed = (s_rand_seed * 214013UL + 2531011UL)
+        % 2147483647UL;
+}
+
+
 void systick_interrupt_handler()
 {
     __hal_time += 1000000 / systick_freq();

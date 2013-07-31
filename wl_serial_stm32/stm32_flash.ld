@@ -117,6 +117,7 @@ SECTIONS
   .data : AT ( _sidata )
   {
     . = ALIGN(4);
+    _init = .;
     _sdata = .;        /* create a global symbol at data start */
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
@@ -128,6 +129,7 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
+    _fini = .;
   } >RAM
 
   /* Uninitialized data section */
