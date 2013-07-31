@@ -17,8 +17,8 @@
 #define logger_printf tfp_printf
 #include "logger.h"
 
-#define UNUSED(v) (void*)(v)
 
+#define UNUSED(x) 
 
 void global_init();
 

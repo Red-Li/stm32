@@ -26,6 +26,13 @@
 #include "nordic_common.h"
 #include "hal_nrf.h"
 
+//Only avaliable for 8051
+#ifndef data
+#define data
+#define pdata
+#define xdata
+#endif
+
 #ifdef SET_BIT //confilict with definition in stm32f10x.h
 #undef SET_BIT
 #endif

@@ -15,6 +15,7 @@
 #include "hal_stm32.h"
 #include "cbuffer.h"
 #include "bit_field.h"
+#include "hal_nrf.h"
 
 #define WLS_DEBUG
 
@@ -30,11 +31,20 @@
 
 #define WLS_GAMBLE()  (hal_rand() % 2 == 0)
 
-typedef uint8_t wls_counter_t;
+#define WLS_RX_MODE()\
+    hal_nrf_set_operation_mode(HAL_NRF_PRX);\
+    CE_HIGH();
 
-#define WLS_PKT_DATA        0x1
-#define WLS_PKT_CMD         0x2
-#define WLS_PKT_CMD_ACK     0x3
+#define WLS_TX_MODE()\
+    CE_LOW();\
+    hal_nrf_set_operation_mode(HAL_NRF_PTX);
+
+typedef uint8_t wls_counter_t;
+typedef hal_nrf_datarate_t wls_speed_t;
+
+#define WLS_PKT_DATA        0x0
+#define WLS_PKT_CMD         0x1
+#define WLS_PKT_CMD_ACK     0x2
 
 /* 
  * wls port flags
@@ -114,6 +124,7 @@ typedef struct wls_s{
     uint32_t count_send;
     uint32_t count_ack_send;
     uint32_t count_send_fail;
+    uint32_t count_retry;
     uint32_t count_recv;
     uint32_t count_recv_drop;
 }wls_t;
@@ -124,10 +135,13 @@ extern wls_t g_wls;
 
 
 int wls_init(wls_t *wls);
+void wls_start(wls_t *wls);
+void wls_stop(wls_t *wls);
 int wls_send_to(wls_t *wls, uint8_t *data, uint8_t len);
 
 void wls_set_callback(wls_t *wls, wls_callback_type_t type, wls_callback_t cb);
 
+void wls_set_rf(wls_t *wls, uint8_t chn, wls_speed_t speed);
 void wls_set_local_addr(wls_t *wls, wls_addr_t addr);
 void wls_set_remote_addr(wls_t *wls, wls_addr_t addr);
 

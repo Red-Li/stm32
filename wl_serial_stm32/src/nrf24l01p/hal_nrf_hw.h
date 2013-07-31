@@ -80,10 +80,6 @@
 } while(0)
 
 
-//Only avaliable for 8051
-#define data
-#define pdata
-#define xdata
 
 void hal_nrf_hw_init();
 
