@@ -95,6 +95,7 @@ int ds_recv(ds_t *ds, uint8_t *buf, uint8_t size)
         pos = pos < size ? pos : size;   
         memcpy(buf, s_ds_rx_fifo, pos);
         
+
         disable_irq(ds->irq);
         while(pos < s_ds_rx_fifo_pos)
             s_ds_rx_fifo[i++] = s_ds_rx_fifo[pos++];

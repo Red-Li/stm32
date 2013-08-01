@@ -21,29 +21,63 @@ uint32_t count_recv = 0,
          count_send = 0,
          count_send_fail = 0;
 
-static hal_timer_t s_uart_poll_timer;
+static uint8_t s_management_mode = 0;
 
+static hal_timer_t s_uart_poll_timer;
+static uint8_t uart_recv_buffer[32];
+
+
+static uint8_t __send_cmd_data(uint8_t *data, uint8_t len)
+{
+    return len;
+}
+
+static uint8_t __send_data(uint8_t *data, uint8_t len)
+{
+    uint8_t handled = wls_send_to(WLS, data, len);
+    count_send += handled;
+    count_send_fail += len - handled;
+
+    return handled;
+}
 
 void uart_poll_data(void *_ds)
 {
-    ds_t *ds = (ds_t*)ds;
-    static hal_time_t pre = 0;
-    uint32_t diff = hal_time_diff(pre, hal_time());
-    
-    DBG("Interval:%d", diff);
+    ds_t *ds = (ds_t*)_ds;
+    uint8_t n = ds_recv(ds, uart_recv_buffer, 32),
+            handled = 0;
 
-    pre = hal_time();
+    while(n){
+        if(s_management_mode){
+            handled = __send_cmd_data(uart_recv_buffer, n);
+        }
+        else{
+            handled = __send_data(uart_recv_buffer, n);
+        }
+
+        if(handled != n)
+            break;
+        n = ds_recv(ds, uart_recv_buffer, 32);
+    }
+
 }
 
 
 
 void handle_data_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 {
-    count_recv += len;
+    uint8_t handled = 0;
+    
+    if(!s_management_mode)
+        handled = ds_send(DS, data, len);
+
+    count_recv += handled;
+    count_recv_fail += len - handled;
 }
 
 void handle_cmd_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 {
+
 }
 
 void handle_cmd_ack_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
@@ -52,14 +86,11 @@ void handle_cmd_ack_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 
 
 
-void send_data(void *priv, uint8_t *data, uint8_t len)
-{
-}
-
-
 void main_loop()
 {
+#if 0
     wls_addr_t laddr, raddr;
+#endif
     uint8_t data[32]  = "hello";
 
 
@@ -69,10 +100,10 @@ void main_loop()
         wls_flush_tx(WLS);
         mdelay(1000);
         
-        hal_nrf_get_address(HAL_NRF_PIPE0, laddr);
-        hal_nrf_get_address(HAL_NRF_TX, raddr);
 
 #if 0
+        hal_nrf_get_address(HAL_NRF_PIPE0, laddr);
+        hal_nrf_get_address(HAL_NRF_TX, raddr);
         DBG("status:0x%x config:0x%x rf:0x%x rf_chn:0x%x fs:0x%x er:0x%x ea:0x%x RPD:0x%x AW:0x%x FEATURE:0x%x DYNPD:0x%x CE:%d laddr:%x:%x:%x:%x:%x raddr:%x:%x:%x:%x:%x", 
                 hal_nrf_read_reg(STATUS), 
                 hal_nrf_read_reg(CONFIG),
@@ -90,14 +121,8 @@ void main_loop()
                 raddr[0], raddr[1], raddr[2], raddr[3], raddr[4]
                 );
 #endif
-        DBG("Hello");
     }
 }
-
-
-static char msg[] = "aaaaaaaaaaaaadfdsddddddddddddddddddddddddsfsfsssssdddddddddddddd -";
-
-
 
 
 int main(void)
@@ -138,7 +163,7 @@ int main(void)
     ds_start(DS);
     
     hal_timer_init(&s_uart_poll_timer, uart_poll_data, DS);
-    hal_timer_start(&s_uart_poll_timer, 1000000, 1);
+    hal_timer_start(&s_uart_poll_timer, 2000, 1); //Every 2ms
 
     //Start handle packet
     wls_start(WLS);
