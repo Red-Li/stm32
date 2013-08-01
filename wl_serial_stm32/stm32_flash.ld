@@ -49,7 +49,6 @@ MEMORY
 /* Highest address of the user mode stack */
 _estack = 0x20005000;    /* end of 20K RAM */
 
-
 /* Define output sections */
 SECTIONS
 {

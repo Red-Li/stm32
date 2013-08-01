@@ -88,36 +88,24 @@ void handle_cmd_ack_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 
 void main_loop()
 {
-#if 0
-    wls_addr_t laddr, raddr;
-#endif
+    uint32_t time_wait = 0;
+    uint32_t max_delay = 2000;
 
 
     while(1){
-        wls_flush_tx(WLS);
-        mdelay(100);
+        WLS->port.tx_buffer_timeout = 8000000UL * WLS_MAX_PD_SIZE / ds_get_baudrate(DS);
         
+        if(wls_flush_tx(WLS) < 0){
+            max_delay = max_delay >= 8000 ? 8000 : max_delay + 1000;
+            time_wait = hal_rand() % max_delay;
+        }
+        else{
+            max_delay = max_delay > 1000 ? max_delay - 1000 : max_delay;
+            time_wait = 0;
+        }
 
-#if 0
-        hal_nrf_get_address(HAL_NRF_PIPE0, laddr);
-        hal_nrf_get_address(HAL_NRF_TX, raddr);
-        DBG("status:0x%x config:0x%x rf:0x%x rf_chn:0x%x fs:0x%x er:0x%x ea:0x%x RPD:0x%x AW:0x%x FEATURE:0x%x DYNPD:0x%x CE:%d laddr:%x:%x:%x:%x:%x raddr:%x:%x:%x:%x:%x", 
-                hal_nrf_read_reg(STATUS), 
-                hal_nrf_read_reg(CONFIG),
-                hal_nrf_read_reg(RF_SETUP),
-                hal_nrf_read_reg(RF_CH),
-                hal_nrf_read_reg(FIFO_STATUS),
-                hal_nrf_read_reg(EN_RXADDR),
-                hal_nrf_read_reg(EN_AA),
-                hal_nrf_read_reg(CD),
-                hal_nrf_read_reg(SETUP_AW),
-                hal_nrf_read_reg(FEATURE),
-                hal_nrf_read_reg(DYNPD),
-                CE_STATE(),
-                laddr[0], laddr[1], laddr[2], laddr[3], laddr[4],
-                raddr[0], raddr[1], raddr[2], raddr[3], raddr[4]
-                );
-#endif
+        time_wait += hal_rand() % 4000 + 2000;
+        udelay(time_wait);
     }
 }
 
@@ -165,6 +153,7 @@ int main(void)
     //Start handle packet
     wls_start(WLS);
 
+    main_loop();
 
     while(1);
     return 0;

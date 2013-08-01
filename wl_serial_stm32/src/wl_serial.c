@@ -146,7 +146,7 @@ static void wls_handle_packet(wls_t *wls, uint8_t _port, uint8_t *_data, uint8_t
 
 #define WLS_CALLBACK_BODY(wls, cb) {\
     wls->count_recv += len;\
-    (wls)->cb.callback((wls)->cb.callback_data, _port, _data, len - WLS_HEADER_SIZE);\
+    (wls)->cb.callback((wls)->cb.callback_data, _port, pkt->payload, len - WLS_HEADER_SIZE);\
 }
 
     uint8_t type = pkt->header.type;
@@ -167,21 +167,21 @@ static void wls_handle_packet(wls_t *wls, uint8_t _port, uint8_t *_data, uint8_t
 
 
 
+
 void wls_nrf24_interrupt_handler()
 {
-    static uint8_t buf[32];
-
+	uint8_t  p[32];
     uint8_t ds;
     uint16_t ret, port;
     
     ds = hal_nrf_get_rx_data_source();
     while(ds < 7U){ //
-        ret = hal_nrf_read_rx_payload(buf);
+        ret = hal_nrf_read_rx_payload(p);
         port = (ret >> 8) & 0xff;
 
         ASSERT(port == 0);
 
-        wls_handle_packet(WLS, port, buf, ret & 0xff);
+        wls_handle_packet(WLS, port, p, ret & 0xff);
 
         ds = hal_nrf_get_rx_data_source();
     }

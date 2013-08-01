@@ -13,6 +13,9 @@
 
 volatile static hal_time_t __hal_time = 0;
 
+//Assign value to _estack in LD script
+
+uint8_t *g_stack_lowest = (uint8_t*)-1;
 
 static void NVIC_Configration(void)
 {
@@ -149,8 +152,10 @@ uint32_t hal_rand()
 
 void systick_interrupt_handler()
 {
+    uint8_t tmp, *p = &tmp;
     __hal_time += 1000000 / systick_freq();
-
+    if(p < g_stack_lowest)
+        g_stack_lowest = p;
 }
 
 void _SysTick_Config()
@@ -173,13 +178,13 @@ void hal_timer_config()
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     TIM_DeInit(TIM3);
 
-    TIM_TimeBaseStructure.TIM_Period = 1000;//ARR的值
+    TIM_TimeBaseStructure.TIM_Period = 1000;//ARR鐨勫�
     TIM_TimeBaseStructure.TIM_Prescaler = 72; //sysclk_freq() / 1000000; //Every 1ms
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; //向上计数模式
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; //鍚戜笂璁℃暟妯″紡
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
     TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
-    TIM_Cmd(TIM3, ENABLE); //开启时钟
+    TIM_Cmd(TIM3, ENABLE); //寮�惎鏃堕挓
 
 }
 
