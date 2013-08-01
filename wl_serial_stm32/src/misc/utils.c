@@ -31,3 +31,10 @@ void global_init(void)
     init_printf((void*)USART1, raw_print_func);
 }
 
+
+
+void _exit(int code)
+{
+    while(1);
+}
+

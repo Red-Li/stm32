@@ -13,6 +13,38 @@
 
 volatile static hal_time_t __hal_time = 0;
 
+
+static void NVIC_Configration(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
+
+    //DMA for uart
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //uart RX irq
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //NRF RX interrupt
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //
+}
+
+
 static void USART_Configration(void)
 {
     //USART1
@@ -37,6 +69,7 @@ static void RCC_Configuration(void)
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB , ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
 
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC , ENABLE);
 }
@@ -89,6 +122,23 @@ hal_time_t hal_time()
 }
 
 
+static uint32_t s_rand_seed = 0;
+void hal_srand(uint32_t seed)
+{
+    if(seed == (uint32_t)-1)
+        s_rand_seed = hal_time();
+    else
+        s_rand_seed = seed;
+}
+
+//http://stackoverflow.com/questions/6275593/how-to-write-you-own-random-number-algorithm
+uint32_t hal_rand()
+{
+    return s_rand_seed = (s_rand_seed * 214013UL + 2531011UL)
+        % 2147483647UL;
+}
+
+
 void systick_interrupt_handler()
 {
     __hal_time += 1000000 / systick_freq();
@@ -116,7 +166,7 @@ void hal_init(void)
 
     USART_Configration();
 
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
+    NVIC_Configration();
 }
 
 void udelay(uint32_t us)

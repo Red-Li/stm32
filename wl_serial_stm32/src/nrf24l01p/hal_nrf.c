@@ -26,6 +26,13 @@
 #include "nordic_common.h"
 #include "hal_nrf.h"
 
+//Only avaliable for 8051
+#ifndef data
+#define data
+#define pdata
+#define xdata
+#endif
+
 #ifdef SET_BIT //confilict with definition in stm32f10x.h
 #undef SET_BIT
 #endif
@@ -206,6 +213,19 @@ void hal_nrf_set_operation_mode(hal_nrf_operation_mode_t op_mode)
 
   hal_nrf_write_reg (CONFIG, config.value);
 }
+
+
+hal_nrf_operation_mode_t hal_nrf_get_operation_mode()
+{
+  config_t config;
+  config.value = hal_nrf_read_reg (CONFIG);
+
+  if(config.bits.prim_rx == 1)
+      return HAL_NRF_PRX;
+  else
+      return HAL_NRF_PTX;
+}
+
 
 void hal_nrf_set_power_mode(hal_nrf_pwr_mode_t pwr_mode)
 {

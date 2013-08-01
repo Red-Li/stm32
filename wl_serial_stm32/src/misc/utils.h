@@ -17,9 +17,21 @@
 #define logger_printf tfp_printf
 #include "logger.h"
 
-#define UNUSED(v) (void*)(v)
+
+#define UNUSED(x) 
+
+//Flags operation
+#define FLAG_SET(flags, flag) ((flags) |= (flag))
+#define FLAG_CLR(flags, flag) ((flags) &= ~(flag))
+#define FLAG_CHECK(flags, flag) ((flags) & (flag))
 
 
 void global_init();
+
+
+
+
+
+
 
 #endif
