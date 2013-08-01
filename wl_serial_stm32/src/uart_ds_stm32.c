@@ -156,6 +156,9 @@ void ds_uart_interrupt_handler()
             --s_ds_rx_fifo_pos;
             ++DS->count_recv_drop;
         }
+        else{
+            ++DS->count_recv;
+        }
     }
     
     USART_ClearFlag(DS->uart, USART_FLAG_RXNE);

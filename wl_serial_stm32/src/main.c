@@ -123,7 +123,7 @@ int handle_remote_cmd(void *priv, uint8_t *data, uint8_t len)
 
 void management_detect()
 {
-    if(1){
+    if(0){
         wl_cmd_set_handle_return((wl_cmd_callback_t)ds_send, DS);
         wl_cmd_reset();
         //Mark baud rate changed
