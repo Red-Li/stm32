@@ -139,6 +139,10 @@ void wls_start(wls_t *wls);
 void wls_stop(wls_t *wls);
 int wls_send_to(wls_t *wls, uint8_t *data, uint8_t len);
 
+int wls_send_cmd(wls_t *wls, uint8_t *_data, uint8_t len);
+
+int wls_send_cmd_result(wls_t *wls, uint8_t *_data, uint8_t len);
+
 void wls_set_callback(wls_t *wls, wls_callback_type_t type, wls_callback_t cb);
 
 void wls_set_rf(wls_t *wls, uint8_t chn, wls_speed_t speed);

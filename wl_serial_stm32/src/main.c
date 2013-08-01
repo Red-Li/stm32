@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "wl_serial.h"
 #include "uart_ds_stm32.h"
+#include "wl_cmd.h"
 #include "settings.h"
 
 uint32_t count_recv = 0,
@@ -29,7 +30,7 @@ static uint8_t uart_recv_buffer[32];
 
 static uint8_t __send_cmd_data(uint8_t *data, uint8_t len)
 {
-    return len;
+    return wl_cmd_recv(data, len);
 }
 
 static uint8_t __send_data(uint8_t *data, uint8_t len)
@@ -75,15 +76,82 @@ void handle_data_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
     count_recv_fail += len - handled;
 }
 
+
+//Send out cmd result
+int send_cmd_result(void *priv, uint8_t *data, uint8_t len)
+{
+    return wls_send_cmd_result((wls_t*)priv, data, len);
+}
+
+
 void handle_cmd_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 {
+    if(!s_management_mode){
+        wl_cmd_set_handle_return(send_cmd_result, WLS);
+        wl_cmd_reset();
+        
+        //Process command
+        wl_cmd_recv(data, len);
+        wl_cmd_set_handle_return(NULL, NULL);
 
+        //Apply settings if needed
+        settings_commit(settings);
+
+        //Save settings if needed
+        settings_save(settings);
+    }
 }
 
 void handle_cmd_ack_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 {
+    //output result
+    if(s_management_mode)
+        ds_send(DS, data, len);
+    //else drop it
 }
 
+
+//Send out remote cmd and receive result
+int handle_remote_cmd(void *priv, uint8_t *data, uint8_t len)
+{
+    return wls_send_cmd((wls_t*)priv, data, len);
+}
+
+
+
+
+
+void management_detect()
+{
+    if(1){
+        wl_cmd_set_handle_return((wl_cmd_callback_t)ds_send, DS);
+        wl_cmd_reset();
+        //Mark baud rate changed
+        settings->dirty_flag |= WL_BAUD_MASK;
+        ds_set_baudrate(DS, 9600);
+
+        s_management_mode = 1;
+#if 0
+        //Check if it is reset by command
+        if(RST_GetFlagStatus(RST_FLAG_WWDGF) == SET){
+            ds_handle_data(DS, "OK", 2);
+            RST_ClearFlag(RST_FLAG_WWDGF);
+        }
+#endif
+    }
+    else{
+        wl_cmd_set_handle_return(NULL, NULL);
+        wl_cmd_reset();
+
+        //Apply settings if needed
+        settings_commit(settings);
+
+        //Save settings if needed
+        settings_save(settings);
+
+        s_management_mode = 0;
+    }
+}
 
 
 void main_loop()
@@ -108,6 +176,7 @@ void main_loop()
         udelay(time_wait);
     }
 }
+
 
 
 int main(void)
@@ -135,23 +204,29 @@ int main(void)
     cb.callback_data = NULL;
     wls_set_callback(WLS, WLS_CB_CMD_ACK, cb);
 
+    //Set handle remote command callback
+    wl_cmd_set_handle_remote_cmd(handle_remote_cmd, WLS);
+
     ASSERT(ds_init(DS) == 0);
 
     //Load settings
     settings_load(settings);
     settings->dirty_flag = 0xffffffff;
     settings_commit(settings);
-
-    local_irq_enable();
     
+    management_detect();
+
     //
     ds_start(DS);
-    
+    local_irq_enable();
+
+
     hal_timer_init(&s_uart_poll_timer, uart_poll_data, DS);
     hal_timer_start(&s_uart_poll_timer, 2000, 1); //Every 2ms
 
     //Start handle packet
     wls_start(WLS);
+    
 
     main_loop();
 

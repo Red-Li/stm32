@@ -72,5 +72,8 @@ void mdelay(uint32_t ms);
 #define usleep udelay
 #define msleep mdelay
 
+/******************************* Hardward device ********************/
+#define HAL_NUM_PWM 4
+#define HAL_NUM_GPIO 4
 
 #endif

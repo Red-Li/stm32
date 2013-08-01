@@ -8,6 +8,7 @@
 
 #include "settings.h"
 #include "wl_serial.h"
+#include "uart_ds_stm32.h"
 
 #define SETTING_TAG 0xFEEFABBA
 
@@ -19,10 +20,10 @@ settings_t g_settings = {
     .wls_rf_speed = HAL_NRF_2MBPS, //2M
     .wls_local_addr = {0x0, 0x1, 0x2, 0x3, 0x4},
     .wls_remote_addr = {0x0, 0x1, 0x2, 0x3, 0x4},
-#if 0
+
     .pwm_duty_cycle = {0, 0, 0, 0},
     .gpio_state = 0,
-#endif
+
     .dirty_flag = 0x0,
     .save_flag = 0x0
 };
@@ -64,10 +65,8 @@ int settings_load(settings_t *st)
 
 int settings_commit(settings_t *st)
 {
-#if 0
     if(st->dirty_flag & WL_BAUD_MASK)
         ds_set_baudrate(DS, st->baudrate);
-#endif
 
     if(st->dirty_flag & (WL_NRF_CHN_MASK | WL_NRF_SPEED_MASK))
         wls_set_rf(WLS, st->wls_rf_chn, st->wls_rf_speed);

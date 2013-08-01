@@ -34,10 +34,10 @@ typedef struct settings_s{
     wls_speed_t wls_rf_speed;
     wls_addr_t wls_local_addr;
     wls_addr_t wls_remote_addr;
-#if 0
-    uint8_t pwm_duty_cycle[WL_NUM_PWM]; //0 - 100
+
+    uint8_t pwm_duty_cycle[HAL_NUM_PWM]; //0 - 10
     uint8_t gpio_state; //maximum 8 GPIOs
-#endif
+
     uint32_t dirty_flag;
     uint32_t save_flag;
 

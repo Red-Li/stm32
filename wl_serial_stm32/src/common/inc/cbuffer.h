@@ -10,7 +10,7 @@
 #define __CBUFFER_H__
 
 #ifndef CBUFFER_INLINE
-#define CBUFFER_INLINE
+#define CBUFFER_INLINE inline
 #endif
 
 #ifndef CBUFFER_MEM_BARRIER

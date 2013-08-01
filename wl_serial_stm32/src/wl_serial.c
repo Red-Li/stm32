@@ -413,7 +413,7 @@ static int __wls_send_cmd_packet(wls_t *wls, uint8_t type, uint8_t *_data, uint8
     ASSERT((port->flags & WLS_FLAG_PKT_LOADED) == 0);
 
     port->active_packet.header.type = type;
-    memcpy((uint8_t*)&port->active_packet, _data, len);
+    memcpy((uint8_t*)&port->active_packet.payload, _data, len);
     port->active_packet_size = len + WLS_HEADER_SIZE;
     WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_LOADED);
     

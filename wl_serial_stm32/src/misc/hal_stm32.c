@@ -46,11 +46,12 @@ static void NVIC_Configration(void)
 
     //hal timer irq
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xf;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
+    NVIC_SetPriority(SysTick_IRQn, 0);
 }
 
 
@@ -196,6 +197,7 @@ void hal_init(void)
     
     SystemCoreClockUpdate();
 
+
     _SysTick_Config();
     //
     RCC_Configuration();
@@ -207,6 +209,7 @@ void hal_init(void)
     hal_timer_config();
 
     NVIC_Configration();
+
 }
 
 void udelay(uint32_t us)
