@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "hal_stm32.h"
+#include "hal_timer.h"
 #include "utils.h"
 #include "wl_serial.h"
 #include "uart_ds_stm32.h"
@@ -19,6 +20,22 @@ uint32_t count_recv = 0,
          count_recv_fail = 0,
          count_send = 0,
          count_send_fail = 0;
+
+static hal_timer_t s_uart_poll_timer;
+
+
+void uart_poll_data(void *_ds)
+{
+    ds_t *ds = (ds_t*)ds;
+    static hal_time_t pre = 0;
+    uint32_t diff = hal_time_diff(pre, hal_time());
+    
+    DBG("Interval:%d", diff);
+
+    pre = hal_time();
+}
+
+
 
 void handle_data_packet(void *priv, uint8_t port, uint8_t *data, uint8_t len)
 {
@@ -80,6 +97,9 @@ void main_loop()
 
 static char msg[] = "aaaaaaaaaaaaadfdsddddddddddddddddddddddddsfsfsssssdddddddddddddd -";
 
+
+
+
 int main(void)
 {
     local_irq_disable();
@@ -116,19 +136,14 @@ int main(void)
     
     //
     ds_start(DS);
+    
+    hal_timer_init(&s_uart_poll_timer, uart_poll_data, DS);
+    hal_timer_start(&s_uart_poll_timer, 1000000, 1);
 
     //Start handle packet
     wls_start(WLS);
 
-#if 1
 
-    while(1){
-        if(ds_send(DS, (uint8_t*)msg, 66) == 0)
-            mdelay(100);
-    }
-
-#else
-    main_loop();
-#endif
+    while(1);
     return 0;
 }
