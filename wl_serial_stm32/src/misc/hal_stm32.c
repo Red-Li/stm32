@@ -13,6 +13,44 @@
 
 volatile static hal_time_t __hal_time = 0;
 
+
+static void NVIC_Configration(void)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
+
+    //DMA for uart
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //uart RX irq
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //NRF RX interrupt
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    //hal timer irq
+    NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+}
+
+
 static void USART_Configration(void)
 {
     //USART1
@@ -37,6 +75,9 @@ static void RCC_Configuration(void)
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB , ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
+
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC , ENABLE);
 }
@@ -119,6 +160,31 @@ void _SysTick_Config()
 }
 
 
+extern void __hal_timer_tick();
+void hal_timer_interrupt_handler()
+{
+    __hal_timer_tick();
+    TIM_ClearITPendingBit(TIM3 , TIM_FLAG_Update);
+}
+
+
+void hal_timer_config()
+{
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    TIM_DeInit(TIM3);
+
+    TIM_TimeBaseStructure.TIM_Period = 1000;//ARR的值
+    TIM_TimeBaseStructure.TIM_Prescaler = 72; //sysclk_freq() / 1000000; //Every 1ms
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; //向上计数模式
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+    TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
+    TIM_Cmd(TIM3, ENABLE); //开启时钟
+
+}
+
+
+
 void hal_init(void) 
 {
     SystemInit();
@@ -132,8 +198,10 @@ void hal_init(void)
     GPIO_Configuration();
 
     USART_Configration();
+    
+    hal_timer_config();
 
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
+    NVIC_Configration();
 }
 
 void udelay(uint32_t us)

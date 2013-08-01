@@ -229,14 +229,19 @@ void wls_start(wls_t *wls)
     udelay(130);
 
     //
+    NRF24_IRQ_ENABLE();
+    //
     wls_nrf24_reset();
 }
 
 
 void wls_stop(wls_t *wls)
 {
+    NRF24_IRQ_DISABLE();
+
     //Power up and ready to rx
     hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);
+
 }
 
 
