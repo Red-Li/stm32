@@ -14,7 +14,7 @@
 
 settings_t g_settings = {
     .tag = SETTING_TAG,
-    .baudrate = 115200,
+    .baudrate = HAL_DEFAULT_UART_BAUD,
 
     .wls_rf_chn = 0x40, 
     .wls_rf_speed = HAL_NRF_2MBPS, //2M

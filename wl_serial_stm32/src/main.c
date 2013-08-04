@@ -185,8 +185,8 @@ int main(void)
     
     global_init();
 
-
-    DBG("Global Init");
+    //Init hal_rand
+    hal_srand(-1);
 
     ASSERT(wls_init(WLS) == 0);
     //Setup callbacks
@@ -218,6 +218,7 @@ int main(void)
 
     //
     ds_start(DS);
+
     local_irq_enable();
 
 

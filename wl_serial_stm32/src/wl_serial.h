@@ -60,15 +60,12 @@ typedef hal_nrf_datarate_t wls_speed_t;
 typedef struct wls_packet_header_s{
     wls_counter_t counter;
     uint8_t type;
-}wls_packet_header_t;
+}__attribute__((packed)) wls_packet_header_t ;
 
-typedef union{
-    struct{
-        wls_packet_header_t header;
-        uint8_t payload[WLS_MAX_PD_SIZE];
-    };
-    uint8_t data[32];
-}wls_packet_t;
+typedef struct{
+    wls_packet_header_t header;
+    uint8_t payload[WLS_MAX_PD_SIZE];
+}__attribute__((packed)) wls_packet_t ;
 
 typedef uint8_t wls_addr_t[5];
 
@@ -79,11 +76,11 @@ typedef struct wls_port_s{
 
     hal_time_t last_send_time;
     
-    wls_counter_t recv_counter; //last recved counter
-    wls_counter_t send_counter;
+    volatile wls_counter_t recv_counter; //last recved counter
+    volatile wls_counter_t send_counter;
     
     uint8_t send_retries;
-    uint8_t flags;
+    volatile uint8_t flags;
 
     wls_packet_t active_packet;
     uint8_t active_packet_size;

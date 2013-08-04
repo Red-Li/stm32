@@ -13,7 +13,7 @@
 
 static uint8_t s_ds_tx_buffer[DS_TX_BUFFER_SIZE];
 static uint8_t s_ds_rx_fifo[DS_RX_BUFFER_SIZE];
-static uint8_t s_ds_rx_fifo_pos = 0;
+static volatile uint8_t s_ds_rx_fifo_pos = 0;
 
 int ds_init(ds_t *ds)
 {
@@ -95,7 +95,6 @@ int ds_recv(ds_t *ds, uint8_t *buf, uint8_t size)
         pos = pos < size ? pos : size;   
         memcpy(buf, s_ds_rx_fifo, pos);
         
-
         disable_irq(ds->irq);
         while(pos < s_ds_rx_fifo_pos)
             s_ds_rx_fifo[i++] = s_ds_rx_fifo[pos++];

@@ -108,22 +108,24 @@ static void wls_handle_ack_payload(wls_t *wls)
     wls_port_t *port = &wls->port;
     
     //Check if we have receive ack for ack payload
-    if((hal_nrf_get_irq_flags() & 0x2) && (port->flags & WLS_FLAG_PKT_ACK)){
-        //ACK payload confirmed
-        wls->count_ack_send += port->active_packet_size;
-        wls->count_send += port->active_packet_size;
+    if((hal_nrf_get_irq_flags() & 0x20)){
+    	hal_nrf_clear_irq_flag(HAL_NRF_TX_DS);
 
-        WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_ACK);
+    	if(port->flags & WLS_FLAG_PKT_ACK){
+    		//ACK payload confirmed
+    		wls->count_ack_send += port->active_packet_size;
+    		wls->count_send += port->active_packet_size;
 
-        //Reset retries
-        port->send_retries = 0;
-        //Update packet send counter
-        ++port->send_counter;
+    		WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_ACK);
 
-        //Update last send time
-        port->last_send_time = hal_time();
+    		//Reset retries
+    		port->send_retries = 0;
+    		//Update packet send counter
+    		++port->send_counter;
 
-        hal_nrf_clear_irq_flag(HAL_NRF_TX_DS);
+    		//Update last send time
+    		port->last_send_time = hal_time();
+    	}
     }
 
     //Load data to ack payload if needed
@@ -277,10 +279,10 @@ static int wls_send_active_packet(wls_t *wls)
     ASSERT(port->flags & WLS_FLAG_PKT_LOADED);
     ASSERT(!(port->flags & WLS_FLAG_PKT_ACK));
 
-    WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_TX);
-
-    if(hal_nrf_get_irq_flags() & 0x3)
+    if(hal_nrf_get_irq_flags() & 0x30)
         return -1; //TX IRQ not handle
+
+    WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_TX);
 
     //
     port->active_packet.header.counter = port->send_counter;
@@ -295,7 +297,6 @@ static int wls_send_active_packet(wls_t *wls)
     //Pluse to send out data
     CE_PULSE();
     
-
     uint8_t status;
     do{
         NRF24_IRQ_DISABLE();
@@ -385,9 +386,11 @@ retry:
 done:
     WLS_RX_MODE();
 
+#if 0 //FIXME: this will cause packet lost
     NRF24_IRQ_DISABLE();
     wls_load_packet_to_ack_fifo(wls);
     NRF24_IRQ_ENABLE();
+#endif
 
     return -!(ret > 0);
 }

@@ -59,7 +59,7 @@ static void USART_Configration(void)
 {
     //USART1
     USART_InitTypeDef USART_InitStructure;
-    USART_InitStructure.USART_BaudRate = 115200;
+    USART_InitStructure.USART_BaudRate = HAL_DEFAULT_UART_BAUD;
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;
     USART_InitStructure.USART_StopBits = USART_StopBits_1;
     USART_InitStructure.USART_Parity = USART_Parity_No;
