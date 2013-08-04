@@ -32,12 +32,18 @@
 #define WLS_GAMBLE()  (hal_rand() % 2 == 0)
 
 #define WLS_RX_MODE()\
-    hal_nrf_set_operation_mode(HAL_NRF_PRX);\
-    CE_HIGH();
+    if(hal_nrf_get_operation_mode() != HAL_NRF_PRX){\
+        hal_nrf_flush_rx();\
+            hal_nrf_set_operation_mode(HAL_NRF_PRX);\
+            CE_HIGH();\
+    }
 
 #define WLS_TX_MODE()\
-    CE_LOW();\
-    hal_nrf_set_operation_mode(HAL_NRF_PTX);
+    if(hal_nrf_get_operation_mode() != HAL_NRF_PTX){\
+        CE_LOW();\
+        hal_nrf_flush_tx();\
+        hal_nrf_set_operation_mode(HAL_NRF_PTX);\
+    }
 
 typedef uint8_t wls_counter_t;
 typedef hal_nrf_datarate_t wls_speed_t;
@@ -53,9 +59,6 @@ typedef hal_nrf_datarate_t wls_speed_t;
 #define WLS_FLAG_PKT_LOADED     0x1
 #define WLS_FLAG_PKT_TX         0x2
 #define WLS_FLAG_PKT_ACK        0x4
-
-#define WLS_FLAG_SET(flags, flag) ((flags) |= (flag))
-#define WLS_FLAG_CLR(flags, flag) ((flags) &= ~(flag))
 
 typedef struct wls_packet_header_s{
     wls_counter_t counter;

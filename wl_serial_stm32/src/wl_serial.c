@@ -93,7 +93,7 @@ static void wls_load_packet_to_ack_fifo(wls_t *wls)
         port->active_packet.header.counter = port->send_counter;
         hal_nrf_write_ack_payload(0, (uint8_t*)&port->active_packet, port->active_packet_size);
         
-        WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_ACK);
+        FLAG_SET(port->flags, WLS_FLAG_PKT_ACK);
     }
 
 }
@@ -116,7 +116,7 @@ static void wls_handle_ack_payload(wls_t *wls)
     		wls->count_ack_send += port->active_packet_size;
     		wls->count_send += port->active_packet_size;
 
-    		WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_ACK);
+    		FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_ACK);
 
     		//Reset retries
     		port->send_retries = 0;
@@ -267,7 +267,7 @@ static int wls_load_one_data_packet(wls_t *wls)
     port->active_packet.header.type = WLS_PKT_DATA;
     port->send_retries = 0;
 
-    WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_LOADED);    
+    FLAG_SET(port->flags, WLS_FLAG_PKT_LOADED);    
 
     return port->active_packet_size;
 }
@@ -282,7 +282,7 @@ static int wls_send_active_packet(wls_t *wls)
     if(hal_nrf_get_irq_flags() & 0x30)
         return -1; //TX IRQ not handle
 
-    WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_TX);
+    FLAG_SET(port->flags, WLS_FLAG_PKT_TX);
 
     //
     port->active_packet.header.counter = port->send_counter;
@@ -308,12 +308,13 @@ static int wls_send_active_packet(wls_t *wls)
     //
     hal_nrf_set_address(HAL_NRF_PIPE0, port->local_addr);
     
+    wls_packet_t *pkt = &port->active_packet;
     //
     if(status & 0x20){ //Send succ
         wls->count_send += port->active_packet_size;
         wls->count_retry += port->send_retries;
 
-        WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX);
+        FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX);
 
         //Reset retries
         port->send_retries = 0;
@@ -324,14 +325,16 @@ static int wls_send_active_packet(wls_t *wls)
         port->last_send_time = hal_time();
 
         hal_nrf_clear_irq_flag(HAL_NRF_TX_DS);
+        
         return port->active_packet_size;
     }
     else if(port->send_retries < WLS_MAX_RETRIES){ //Need retry
 
         ++port->send_retries;
-        WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_TX);
+        FLAG_CLR(port->flags, WLS_FLAG_PKT_TX);
         
         hal_nrf_clear_irq_flag(HAL_NRF_MAX_RT);
+
         return -1;
     }
     else{ //Retry failed
@@ -339,7 +342,7 @@ static int wls_send_active_packet(wls_t *wls)
         wls->count_send_fail += port->active_packet_size;
         wls->count_retry += port->send_retries;
 
-        WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX);
+        FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX);
         
         //Reset retries
         port->send_retries = 0;
@@ -350,6 +353,7 @@ static int wls_send_active_packet(wls_t *wls)
         port->last_send_time = hal_time();
 
         hal_nrf_clear_irq_flag(HAL_NRF_MAX_RT);
+
         return 0;
     }
 }
@@ -366,12 +370,12 @@ int wls_flush_tx(wls_t *wls)
     //
     wls_port_t *port = &wls->port;
     int ret = 0;
-
+    
     //Make sure active packet handled by this thread
-    WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_ACK);
+    FLAG_CLR(port->flags, WLS_FLAG_PKT_ACK);
     WLS_TX_MODE();
-
     NRF24_IRQ_ENABLE();
+
 
 retry:
 
@@ -386,11 +390,9 @@ retry:
 done:
     WLS_RX_MODE();
 
-#if 0 //FIXME: this will cause packet lost
     NRF24_IRQ_DISABLE();
     wls_load_packet_to_ack_fifo(wls);
     NRF24_IRQ_ENABLE();
-#endif
 
     return -!(ret > 0);
 }
@@ -402,7 +404,7 @@ static int __wls_send_cmd_packet(wls_t *wls, uint8_t type, uint8_t *_data, uint8
     int ret = -1;
 
     NRF24_IRQ_DISABLE();
-    WLS_FLAG_CLR(wls->port.flags, WLS_FLAG_PKT_ACK);
+    FLAG_CLR(wls->port.flags, WLS_FLAG_PKT_ACK);
     WLS_TX_MODE();
     NRF24_IRQ_ENABLE();
 
@@ -418,7 +420,7 @@ static int __wls_send_cmd_packet(wls_t *wls, uint8_t type, uint8_t *_data, uint8
     port->active_packet.header.type = type;
     memcpy((uint8_t*)&port->active_packet.payload, _data, len);
     port->active_packet_size = len + WLS_HEADER_SIZE;
-    WLS_FLAG_SET(port->flags, WLS_FLAG_PKT_LOADED);
+    FLAG_SET(port->flags, WLS_FLAG_PKT_LOADED);
     
     do{
         udelay(100);
@@ -484,7 +486,7 @@ void wls_set_local_addr(wls_t *wls, wls_addr_t addr)
 
     NRF24_IRQ_DISABLE();
 
-    WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
+    FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
 
     wls->count_retry += port->send_retries;
     port->send_retries = 0;
@@ -504,7 +506,7 @@ void wls_set_remote_addr(wls_t *wls, wls_addr_t addr)
 
     NRF24_IRQ_DISABLE();
 
-    WLS_FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
+    FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
 
     wls->count_retry += port->send_retries;
     port->send_retries = 0;

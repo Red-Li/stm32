@@ -31,7 +31,7 @@ hal_time_t hal_time(); //return us
 void hal_srand(uint32_t seed);
 uint32_t hal_rand();
 
-#define HAL_DEFAULT_UART_BAUD 115200
+#define HAL_DEFAULT_UART_BAUD 38400
 
 //return t1 - t0
 #define hal_time_diff(t0, t1) ((t1) - (t0))
