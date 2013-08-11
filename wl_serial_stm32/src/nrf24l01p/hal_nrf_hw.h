@@ -22,7 +22,7 @@
 #define NRF24_IRQ_PIN  GPIO_Pin_0
 #define NRF24_IRQ      EXTI0_IRQn
 #define NRF24_IRQ_LINE EXTI_Line0
-#define NRF24_CE_GPIO  GPIOB
+#define NRF24_CE_GPIO  GPIOA
 #define NRF24_CE_PIN   GPIO_Pin_1
 #define NRF24_SPI      SPI2
 

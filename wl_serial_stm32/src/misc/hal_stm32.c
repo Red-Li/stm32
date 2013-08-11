@@ -44,6 +44,13 @@ static void NVIC_Configration(void)
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
 
+    //management interrupt
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
     //hal timer irq
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xf;
@@ -87,6 +94,26 @@ static void RCC_Configuration(void)
 }
 
 
+static void EXTI_Configuration(void)
+{
+    EXTI_InitTypeDef EXTI_InitStruct;
+    EXTI_DeInit();
+
+    //NRF IRQ
+    EXTI_InitStruct.EXTI_Line = EXTI_Line0;
+    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStruct);
+
+    //management IRQ
+    EXTI_InitStruct.EXTI_Line = EXTI_Line2;
+    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStruct);
+}
+
 static void GPIO_Configuration(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -107,10 +134,15 @@ static void GPIO_Configuration(void)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
-    //NSS and CE
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_1;
+    //NSS 
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
+    //CE
+    GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_1;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    
     //Configure IRQ PIN
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
@@ -119,6 +151,15 @@ static void GPIO_Configuration(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     //Enable extern interrupt
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0); //interrupt 0 
+
+    //Configure management IRQ 
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+    //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//input
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    //Enable extern interrupt
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2); //interrupt 0 
 
 }
 
@@ -201,6 +242,8 @@ void hal_init(void)
     _SysTick_Config();
     //
     RCC_Configuration();
+
+    EXTI_Configuration();
 
     GPIO_Configuration();
 

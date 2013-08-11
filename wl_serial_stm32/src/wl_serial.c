@@ -227,13 +227,15 @@ void wls_start(wls_t *wls)
     //Power up and ready to rx
     hal_nrf_set_power_mode(HAL_NRF_PWR_UP);
     udelay(1500); //1.5ms
-    WLS_RX_MODE()
+    CE_LOW();
+    hal_nrf_set_operation_mode(HAL_NRF_PRX);
+    CE_HIGH();
     udelay(130);
 
+    wls_nrf24_reset();
     //
     NRF24_IRQ_ENABLE();
     //
-    wls_nrf24_reset();
 }
 
 
@@ -276,12 +278,11 @@ static int wls_load_one_data_packet(wls_t *wls)
 static int wls_send_active_packet(wls_t *wls)
 {
     wls_port_t *port = &wls->port;
+    uint8_t size = port->active_packet_size;
     ASSERT(port->flags & WLS_FLAG_PKT_LOADED);
     ASSERT(!(port->flags & WLS_FLAG_PKT_ACK));
 
-    if(hal_nrf_get_irq_flags() & 0x30)
-        return -1; //TX IRQ not handle
-
+    //ASSERT(hal_nrf_get_irq_flags() & 0x30 == 0);
     FLAG_SET(port->flags, WLS_FLAG_PKT_TX);
 
     //
@@ -291,8 +292,21 @@ static int wls_send_active_packet(wls_t *wls)
     hal_nrf_set_address(HAL_NRF_PIPE0, port->target_addr);
 
     //setup restransmit
-    hal_nrf_set_auto_retr(0x3, 0x20);//100us, 3
-    hal_nrf_write_tx_payload((uint8_t*)&port->active_packet, port->active_packet_size);
+    uint8_t rf_setup = hal_nrf_read_reg (RF_SETUP);
+    if(BIT_GET(rf_setup, 5) && size > 15) //250kbps
+        hal_nrf_set_auto_retr(0x3, 0x40);
+    else if(BIT_GET(rf_setup, 5) && size > 10) 
+        hal_nrf_set_auto_retr(0x3, 0x30);
+    else if(BIT_GET(rf_setup, 5) && size > 5)
+        hal_nrf_set_auto_retr(0x3, 0x20); 
+    else if(!BIT_GET(rf_setup, 3) && size > 5) //1Mbps
+        hal_nrf_set_auto_retr(0x3, 0x10);
+    else if(BIT_GET(rf_setup, 3) && size > 15)
+        hal_nrf_set_auto_retr(0x3, 0x10);
+    else
+        hal_nrf_set_auto_retr(0x3, 0x00);
+
+    hal_nrf_write_tx_payload((uint8_t*)&port->active_packet, size);
 
     //Pluse to send out data
     CE_PULSE();
@@ -302,14 +316,13 @@ static int wls_send_active_packet(wls_t *wls)
         NRF24_IRQ_DISABLE();
         status = hal_nrf_get_irq_flags();
         NRF24_IRQ_ENABLE();
-    }while((status & 0x30) == 0); //Wait for transmit done
-
+    }while(!FLAG_CHECK(status,0x30)); //Wait for transmit done
 
     //
     hal_nrf_set_address(HAL_NRF_PIPE0, port->local_addr);
     
     //
-    if(status & 0x20){ //Send succ
+    if(FLAG_CHECK(status, 0x20)){ //Send succ
         wls->count_send += port->active_packet_size;
         wls->count_retry += port->send_retries;
 
@@ -361,24 +374,30 @@ static int wls_send_active_packet(wls_t *wls)
 
 int wls_flush_tx(wls_t *wls)
 {
+    //
+    wls_port_t *port = &wls->port;
+    int ret = 0;
+
     NRF24_IRQ_DISABLE();
     if(hal_nrf_get_carrier_detect() && !WLS_GAMBLE()){
         NRF24_IRQ_ENABLE();
         return -1;
     }
-    //
-    wls_port_t *port = &wls->port;
-    int ret = 0;
-    
+
+    //if no data need to send
+    if(!FLAG_CHECK(port->flags, WLS_FLAG_PKT_LOADED) && CBUFFER_EMPTY(&port->cb)){
+        NRF24_IRQ_ENABLE();
+        return 0;
+    }
+
     //Make sure active packet handled by this thread
     FLAG_CLR(port->flags, WLS_FLAG_PKT_ACK);
     WLS_TX_MODE();
     NRF24_IRQ_ENABLE();
 
-
 retry:
 
-    if(!(port->flags & WLS_FLAG_PKT_LOADED) 
+    if(!FLAG_CHECK(port->flags, WLS_FLAG_PKT_LOADED) 
             && !wls_load_one_data_packet(wls))
         goto done;
 

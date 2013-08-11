@@ -17,6 +17,12 @@
 #include "wl_cmd.h"
 #include "settings.h"
 
+
+#define MANAGEMENT_GPIO GPIOA
+#define MANAGEMENT_PIN  GPIO_Pin_2
+#define MANAGEMENT_IRQ_LINE EXTI_Line2
+#define MANAGEMENT_SELECTED() (!GPIO_ReadInputDataBit(MANAGEMENT_GPIO, MANAGEMENT_PIN))
+
 uint32_t count_recv = 0,
          count_recv_fail = 0,
          count_send = 0,
@@ -119,11 +125,9 @@ int handle_remote_cmd(void *priv, uint8_t *data, uint8_t len)
 
 
 
-
-
 void management_detect()
 {
-    if(0){
+    if(MANAGEMENT_SELECTED()){
         wl_cmd_set_handle_return((wl_cmd_callback_t)ds_send, DS);
         wl_cmd_reset();
         //Mark baud rate changed
@@ -152,6 +156,14 @@ void management_detect()
         s_management_mode = 0;
     }
 }
+
+
+void management_interrupt_handler()
+{
+    management_detect();
+    EXTI_ClearITPendingBit(MANAGEMENT_IRQ_LINE); //clear it, make it can receive interrupt again
+}
+
 
 
 void main_loop()
