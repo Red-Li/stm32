@@ -16,8 +16,8 @@
 #include "stm32f10x.h"
 
 //Board definition
-#define HAL_BOARD_DOFLY 1
-//#define HAL_BOARD_OURSTM
+//#define HAL_BOARD_DOFLY 1
+#define HAL_BOARD_OURSTM
 
 //Board resource select
 #if defined(HAL_BOARD_DOFLY)
