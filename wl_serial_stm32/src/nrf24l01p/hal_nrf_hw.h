@@ -16,60 +16,50 @@
  * Custom micros 
  */
 
-#define NRF24_CSN_GPIO GPIOB
-#define NRF24_CSN_PIN  GPIO_Pin_12
-#define NRF24_IRQ_GPIO GPIOA
-#define NRF24_IRQ_PIN  GPIO_Pin_0
-#define NRF24_IRQ      EXTI0_IRQn
-#define NRF24_IRQ_LINE EXTI_Line0
-#define NRF24_CE_GPIO  GPIOA
-#define NRF24_CE_PIN   GPIO_Pin_1
-#define NRF24_SPI      SPI2
+#define CSN_STATE() GPIO_ReadOutputDataBit(HAL_NRF_SPI_GPIO, HAL_NRF_SPI_CSN_PIN)
+#define CE_STATE() GPIO_ReadOutputDataBit(HAL_NRF_CE_GPIO, HAL_NRF_CE_PIN)
 
-#define CSN_STATE() GPIO_ReadOutputDataBit(NRF24_CSN_GPIO, NRF24_CSN_PIN)
-#define CE_STATE() GPIO_ReadOutputDataBit(NRF24_CE_GPIO, NRF24_CE_PIN)
-
-#define NRF24_IRQ_DISABLE()     disable_irq(NRF24_IRQ)
-#define NRF24_IRQ_ENABLE()      enable_irq(NRF24_IRQ)
+#define NRF_IRQ_DISABLE()     disable_irq(HAL_NRF_IRQ_CHN)
+#define NRF_IRQ_ENABLE()      enable_irq(HAL_NRF_IRQ_CHN)
 
 /** Macro that set radio's CSN line LOW.
  *
  */
-#define CSN_LOW() GPIO_WriteBit(NRF24_CSN_GPIO, NRF24_CSN_PIN, 0)
+#define CSN_LOW() GPIO_WriteBit(HAL_NRF_SPI_GPIO, HAL_NRF_SPI_CSN_PIN, 0)
 
 /** Macro that set radio's CSN line HIGH.
  *
  */
-#define CSN_HIGH()  GPIO_WriteBit(NRF24_CSN_GPIO, NRF24_CSN_PIN, 1)
+#define CSN_HIGH()  GPIO_WriteBit(HAL_NRF_SPI_GPIO, HAL_NRF_SPI_CSN_PIN, 1)
 
 /** Macro that set radio's CE line LOW.
  *
  */
-#define CE_LOW() GPIO_WriteBit(NRF24_CE_GPIO, NRF24_CE_PIN, 0)
+#define CE_LOW() GPIO_WriteBit(HAL_NRF_CE_GPIO, HAL_NRF_CE_PIN, 0)
 
 /** Macro that set radio's CE line HIGH.
  *
  */
-#define CE_HIGH() GPIO_WriteBit(NRF24_CE_GPIO, NRF24_CE_PIN, 1)
+#define CE_HIGH() GPIO_WriteBit(HAL_NRF_CE_GPIO, HAL_NRF_CE_PIN, 1)
 
 /** Macro for writing the radio SPI data register.
  *
  */
 #define HAL_NRF_HW_SPI_WRITE(d) do{\
-    while(SPI_I2S_GetFlagStatus(NRF24_SPI, SPI_I2S_FLAG_TXE) == RESET);\
-    SPI_I2S_SendData(NRF24_SPI, (d)); \
+    while(SPI_I2S_GetFlagStatus(HAL_NRF_SPI, SPI_I2S_FLAG_TXE) == RESET);\
+    SPI_I2S_SendData(HAL_NRF_SPI, (d)); \
 }while(0)
 
 /** Macro for reading the radio SPI data register.
  *
  */
-#define HAL_NRF_HW_SPI_READ() SPI_I2S_ReceiveData(NRF24_SPI)
+#define HAL_NRF_HW_SPI_READ() SPI_I2S_ReceiveData(HAL_NRF_SPI)
 
 /** Macro specifyng the radio SPI busy flag.
  *
  */
 #define HAL_NRF_HW_SPI_BUSY \
-    (SPI_I2S_GetFlagStatus(NRF24_SPI, SPI_I2S_FLAG_RXNE) == RESET)
+    (SPI_I2S_GetFlagStatus(HAL_NRF_SPI, SPI_I2S_FLAG_RXNE) == RESET)
 /**
  * Pulses the CE to nRF24L01p for at least 10 us
  */

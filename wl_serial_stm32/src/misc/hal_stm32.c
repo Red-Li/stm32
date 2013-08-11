@@ -24,28 +24,28 @@ static void NVIC_Configration(void)
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
 
     //DMA for uart
-    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = HAL_DS_UART_DMA_IRQ_CHN;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
 
     //uart RX irq
-    NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = HAL_DS_UART_RX_IRQ_CHN;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
 
     //NRF RX interrupt
-    NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = HAL_NRF_IRQ_CHN;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x2;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
 
     //management interrupt
-    NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = HAL_MANAGEMENT_IRQ_CHN;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -81,6 +81,7 @@ static void USART_Configration(void)
 
 static void RCC_Configuration(void)
 {
+#if defined(HAL_BOARD_DOFLY)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB , ENABLE);
 
@@ -90,7 +91,17 @@ static void RCC_Configuration(void)
 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
 
-	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC , ENABLE);
+#elif defined(HAL_BOARD_OURSTM)
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB , ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
+#else
+#error "No board have been selected"
+#endif
 }
 
 
@@ -100,14 +111,14 @@ static void EXTI_Configuration(void)
     EXTI_DeInit();
 
     //NRF IRQ
-    EXTI_InitStruct.EXTI_Line = EXTI_Line0;
+    EXTI_InitStruct.EXTI_Line = HAL_NRF_EXTI_LINE;
     EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
     EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
     EXTI_InitStruct.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStruct);
 
     //management IRQ
-    EXTI_InitStruct.EXTI_Line = EXTI_Line2;
+    EXTI_InitStruct.EXTI_Line = HAL_MANAGEMENT_EXTI_LINE;
     EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
     EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     EXTI_InitStruct.EXTI_LineCmd = ENABLE;
@@ -120,46 +131,46 @@ static void GPIO_Configuration(void)
 
     /* Configure USART3 Tx as push-pull */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+    GPIO_InitStructure.GPIO_Pin = HAL_DS_UART_TX_PIN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_Init(HAL_DS_UART_GPIO, &GPIO_InitStructure);
     /* Configure USART3 Rx as input floating */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Pin = HAL_DS_UART_RX_PIN;
+    GPIO_Init(HAL_DS_UART_GPIO, &GPIO_InitStructure);
     
     /* Configure SPI2 */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     //SCK, MISO, MOSI
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Pin = HAL_NRF_SPI_SCK_PIN | HAL_NRF_SPI_MISO_PIN | HAL_NRF_SPI_MOSI_PIN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_Init(HAL_NRF_SPI_GPIO, &GPIO_InitStructure);
     //NSS 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+    GPIO_InitStructure.GPIO_Pin = HAL_NRF_SPI_CSN_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_Init(HAL_NRF_SPI_GPIO, &GPIO_InitStructure);
     //CE
-    GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_1;
+    GPIO_InitStructure.GPIO_Pin = HAL_NRF_CE_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(HAL_NRF_CE_GPIO, &GPIO_InitStructure);
     
     //Configure IRQ PIN
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Pin = HAL_NRF_IRQ_PIN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
     //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//input
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(HAL_NRF_IRQ_GPIO, &GPIO_InitStructure);
     //Enable extern interrupt
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0); //interrupt 0 
+    GPIO_EXTILineConfig(HAL_NRF_EXTI_PORT, HAL_NRF_EXTI_PORT_SOURCE); //interrupt 0 
 
     //Configure management IRQ 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Pin = HAL_MANAGEMENT_PIN;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
     //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;//input
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(HAL_MANAGEMENT_GPIO, &GPIO_InitStructure);
     //Enable extern interrupt
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2); //interrupt 0 
+    GPIO_EXTILineConfig(HAL_MANAGEMENT_EXTI_PORT, HAL_MANAGEMENT_EXTI_PORT_SOURCE); //interrupt 0 
 
 }
 

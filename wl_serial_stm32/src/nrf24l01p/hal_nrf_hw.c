@@ -25,38 +25,22 @@ void hal_nrf_hw_init()
     SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16; //定义波特率预分频的值:波特率预分频值为8 
     SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;	    //数据传输从MSB位开始 
     SPI_InitStructure.SPI_CRCPolynomial = 7;	    //CRC值计算的多项式 
-    SPI_Init(NRF24_SPI, &SPI_InitStructure); 
+    SPI_Init(HAL_NRF_SPI, &SPI_InitStructure); 
 
     /* Enable SPI  */ 
-    SPI_Cmd(NRF24_SPI, ENABLE);   //使能cxt->spi外设
+    SPI_Cmd(HAL_NRF_SPI, ENABLE);   //使能cxt->spi外设
     
-    //EXTI config
-    EXTI_InitTypeDef EXTI_InitStructure;
-    EXTI_InitStructure.EXTI_Line = NRF24_IRQ_LINE;
-    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_InitStructure.EXTI_LineCmd = ENABLE; //
-    EXTI_Init(&EXTI_InitStructure);
-
-    //Enable in NVIC
-    NVIC_InitTypeDef NVIC_InitStructure;
-    NVIC_InitStructure.NVIC_IRQChannel = NRF24_IRQ;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1; 
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
-    
-    NVIC_EnableIRQ(NRF24_IRQ);
+    NVIC_EnableIRQ(HAL_NRF_IRQ_CHN);
 }
 
 
 uint8_t hal_nrf_rw(uint8_t reg)
 {
-    while(SPI_I2S_GetFlagStatus(NRF24_SPI, SPI_I2S_FLAG_TXE) == RESET); //Wait tx empty
-    SPI_I2S_SendData(NRF24_SPI, reg); //
+    while(SPI_I2S_GetFlagStatus(HAL_NRF_SPI, SPI_I2S_FLAG_TXE) == RESET); //Wait tx empty
+    SPI_I2S_SendData(HAL_NRF_SPI, reg); //
 
-    while(SPI_I2S_GetFlagStatus(NRF24_SPI, SPI_I2S_FLAG_RXNE) == RESET); //Wait rx no empty
-    return SPI_I2S_ReceiveData(NRF24_SPI);
+    while(SPI_I2S_GetFlagStatus(HAL_NRF_SPI, SPI_I2S_FLAG_RXNE) == RESET); //Wait rx no empty
+    return SPI_I2S_ReceiveData(HAL_NRF_SPI);
 }
 
 

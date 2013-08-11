@@ -15,6 +15,103 @@
 #include "misc.h"
 #include "stm32f10x.h"
 
+//Board definition
+#define HAL_BOARD_DOFLY 1
+//#define HAL_BOARD_OURSTM
+
+//Board resource select
+#if defined(HAL_BOARD_DOFLY)
+//UART
+#define HAL_DEBUG_UART                          USART3
+#define HAL_DEFAULT_UART_BAUD                   38400
+
+#define HAL_DS_UART_GPIO                        GPIOB
+#define HAL_DS_UART_RX_PIN                      GPIO_Pin_11
+#define HAL_DS_UART_TX_PIN                      GPIO_Pin_10
+
+#define HAL_DS_UART                             HAL_DEBUG_UART
+#define HAL_DS_UART_DMA_CHN                     DMA1_Channel2
+#define HAL_DS_UART_DMA_IRQ_CHN                 DMA1_Channel2_IRQn
+#define HAL_DS_UART_DMA_TE                      DMA1_IT_TE2
+#define HAL_DS_UART_DMA_TC                      DMA1_IT_TC2
+#define HAL_DS_UART_RX_IRQ_CHN                  USART3_IRQn
+
+//NRF24L01
+#define HAL_NRF_SPI                             SPI2
+#define HAL_NRF_SPI_GPIO                        GPIOB
+#define HAL_NRF_SPI_CSN_PIN                     GPIO_Pin_12
+#define HAL_NRF_SPI_SCK_PIN                     GPIO_Pin_13
+#define HAL_NRF_SPI_MISO_PIN                    GPIO_Pin_14
+#define HAL_NRF_SPI_MOSI_PIN                    GPIO_Pin_15
+#define HAL_NRF_CE_GPIO                         GPIOA
+#define HAL_NRF_CE_PIN                          GPIO_Pin_1
+#define HAL_NRF_IRQ_GPIO                        GPIOA
+#define HAL_NRF_IRQ_PIN                         GPIO_Pin_0
+
+#define HAL_NRF_IRQ_CHN                         EXTI0_IRQn
+#define HAL_NRF_EXTI_LINE                       EXTI_Line0
+#define HAL_NRF_EXTI_PORT                       GPIO_PortSourceGPIOA
+#define HAL_NRF_EXTI_PORT_SOURCE                GPIO_PinSource0
+
+//management
+#define HAL_MANAGEMENT_GPIO                     GPIOA
+#define HAL_MANAGEMENT_PIN                      GPIO_Pin_2
+#define HAL_MANAGEMENT_IRQ_CHN                  EXTI2_IRQn
+#define HAL_MANAGEMENT_EXTI_LINE                EXTI_Line2
+#define HAL_MANAGEMENT_EXTI_PORT                GPIO_PortSourceGPIOA
+#define HAL_MANAGEMENT_EXTI_PORT_SOURCE         GPIO_PinSource2
+
+#elif defined(HAL_BOARD_OURSTM)
+//UART
+#define HAL_DEBUG_UART                          USART1
+#define HAL_DEFAULT_UART_BAUD                   38400
+
+#define HAL_DS_UART_GPIO                        GPIOA
+#define HAL_DS_UART_RX_PIN                      GPIO_Pin_10
+#define HAL_DS_UART_TX_PIN                      GPIO_Pin_9
+#define HAL_DS_UART_RX_IRQ_CHN                  USART1_IRQn
+
+#define HAL_DS_UART                             HAL_DEBUG_UART
+#define HAL_DS_UART_DMA_CHN                     DMA1_Channel4
+#define HAL_DS_UART_DMA_IRQ_CHN                 DMA1_Channel4_IRQn
+#define HAL_DS_UART_DMA_TE                      DMA1_IT_TE4
+#define HAL_DS_UART_DMA_TC                      DMA1_IT_TC4
+
+//NRF24L01
+#define HAL_NRF_SPI                             SPI2
+#define HAL_NRF_SPI_GPIO                        GPIOB
+#define HAL_NRF_SPI_CSN_PIN                     GPIO_Pin_12
+#define HAL_NRF_SPI_SCK_PIN                     GPIO_Pin_13
+#define HAL_NRF_SPI_MISO_PIN                    GPIO_Pin_14
+#define HAL_NRF_SPI_MOSI_PIN                    GPIO_Pin_15
+#define HAL_NRF_CE_GPIO                         GPIOB
+#define HAL_NRF_CE_PIN                          GPIO_Pin_1
+#define HAL_NRF_IRQ_GPIO                        GPIOA
+#define HAL_NRF_IRQ_PIN                         GPIO_Pin_0
+
+#define HAL_NRF_IRQ_CHN                         EXTI0_IRQn
+#define HAL_NRF_EXTI_LINE                       EXTI_Line0
+#define HAL_NRF_EXTI_PORT                       GPIO_PortSourceGPIOA
+#define HAL_NRF_EXTI_PORT_SOURCE                GPIO_PinSource0
+
+//management
+#define HAL_MANAGEMENT_GPIO                     GPIOA
+#define HAL_MANAGEMENT_PIN                      GPIO_Pin_2
+#define HAL_MANAGEMENT_IRQ_CHN                  EXTI2_IRQn
+#define HAL_MANAGEMENT_EXTI_LINE                EXTI_Line2
+#define HAL_MANAGEMENT_EXTI_PORT                GPIO_PortSourceGPIOA
+#define HAL_MANAGEMENT_EXTI_PORT_SOURCE         GPIO_PinSource2
+
+#else
+#error "No board have been selected"
+#endif
+
+
+
+
+
+
+
 void hal_init();
 typedef uint64_t hal_time_t;
 
@@ -31,8 +128,6 @@ hal_time_t hal_time(); //return us
 void hal_srand(uint32_t seed);
 uint32_t hal_rand();
 
-#define HAL_DEBUG_UART USART3
-#define HAL_DEFAULT_UART_BAUD 38400
 
 //return t1 - t0
 #define hal_time_diff(t0, t1) ((t1) - (t0))

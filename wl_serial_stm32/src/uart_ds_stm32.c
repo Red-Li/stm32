@@ -125,21 +125,21 @@ void ds_uart_dma_interrupt_handler()
 {
     ASSERT(DS->dma->CPAR == (uint32_t)(&DS->uart->DR));
 
-    if(DMA_GetITStatus(DMA1_IT_TE2)){ //Error
+    if(DMA_GetITStatus(HAL_DS_UART_DMA_TE)){ //Error
         DS->count_send_fail += DS->dma_init_struct.DMA_BufferSize;
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
         ds_tx_dma_start(DS);
 
-        DMA_ClearITPendingBit(DMA1_IT_TE2);
+        DMA_ClearITPendingBit(HAL_DS_UART_DMA_TE);
     }
-    else if(DMA_GetITStatus(DMA1_IT_TC2)){
+    else if(DMA_GetITStatus(HAL_DS_UART_DMA_TC)){
         DS->count_send += DS->dma_init_struct.DMA_BufferSize;
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
         ds_tx_dma_start(DS);
 
-        DMA_ClearITPendingBit(DMA1_IT_TC2);
+        DMA_ClearITPendingBit(HAL_DS_UART_DMA_TC);
     }
     else{
         ASSERT(0);
@@ -168,11 +168,11 @@ void ds_uart_interrupt_handler()
 
 
 ds_t g_ds = {
-    .uart = USART3,
-    .irq = USART3_IRQn,
+    .uart = HAL_DS_UART,
+    .irq = HAL_DS_UART_RX_IRQ_CHN,
 
-    .dma = DMA1_Channel2,
-    .dma_irq = DMA1_Channel2_IRQn,
+    .dma = HAL_DS_UART_DMA_CHN,
+    .dma_irq = HAL_DS_UART_DMA_IRQ_CHN,
 
     .flags = 0,
 

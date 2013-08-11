@@ -191,7 +191,7 @@ void wls_nrf24_interrupt_handler()
     //Only clear the RX DR interrupt
     hal_nrf_clear_irq_flag(HAL_NRF_RX_DR);
 
-    EXTI_ClearITPendingBit(NRF24_IRQ_LINE); //clear it, make it can receive interrupt again
+    EXTI_ClearITPendingBit(HAL_NRF_EXTI_LINE); //clear it, make it can receive interrupt again
     //NVIC_ClearPendingIRQ(NRF24_IRQ);
 }
 
@@ -234,14 +234,14 @@ void wls_start(wls_t *wls)
 
     wls_nrf24_reset();
     //
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
     //
 }
 
 
 void wls_stop(wls_t *wls)
 {
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
 
     //Power up and ready to rx
     hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);
@@ -313,9 +313,9 @@ static int wls_send_active_packet(wls_t *wls)
     
     uint8_t status;
     do{
-        NRF24_IRQ_DISABLE();
+        NRF_IRQ_DISABLE();
         status = hal_nrf_get_irq_flags();
-        NRF24_IRQ_ENABLE();
+        NRF_IRQ_ENABLE();
     }while(!FLAG_CHECK(status,0x30)); //Wait for transmit done
 
     //
@@ -378,22 +378,22 @@ int wls_flush_tx(wls_t *wls)
     wls_port_t *port = &wls->port;
     int ret = 0;
 
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
     if(hal_nrf_get_carrier_detect() && !WLS_GAMBLE()){
-        NRF24_IRQ_ENABLE();
+        NRF_IRQ_ENABLE();
         return -1;
     }
 
     //if no data need to send
     if(!FLAG_CHECK(port->flags, WLS_FLAG_PKT_LOADED) && CBUFFER_EMPTY(&port->cb)){
-        NRF24_IRQ_ENABLE();
+        NRF_IRQ_ENABLE();
         return 0;
     }
 
     //Make sure active packet handled by this thread
     FLAG_CLR(port->flags, WLS_FLAG_PKT_ACK);
     WLS_TX_MODE();
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
 
 retry:
 
@@ -422,10 +422,10 @@ static int __wls_send_cmd_packet(wls_t *wls, uint8_t type, uint8_t *_data, uint8
     ASSERT(len > 0 && len < WLS_MAX_PD_SIZE);
     int ret = -1;
 
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
     FLAG_CLR(wls->port.flags, WLS_FLAG_PKT_ACK);
     WLS_TX_MODE();
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
 
     wls_port_t *port = &wls->port;
     //Check last packet 
@@ -493,17 +493,17 @@ void wls_set_callback(wls_t *wls, wls_callback_type_t type, wls_callback_t cb)
 
 void wls_set_rf(wls_t *wls, uint8_t chn, wls_speed_t speed)
 {
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
     hal_nrf_set_datarate(speed);
     hal_nrf_set_rf_channel(chn);
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
 }
 
 void wls_set_local_addr(wls_t *wls, wls_addr_t addr)
 {
     wls_port_t *port = &wls->port;
 
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
 
     FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
 
@@ -514,7 +514,7 @@ void wls_set_local_addr(wls_t *wls, wls_addr_t addr)
 
     hal_nrf_set_address(HAL_NRF_PIPE0, addr);
 
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
 
     memcpy(wls->port.local_addr, addr, sizeof(wls_addr_t));
 }
@@ -523,7 +523,7 @@ void wls_set_remote_addr(wls_t *wls, wls_addr_t addr)
 {
     wls_port_t *port = &wls->port;
 
-    NRF24_IRQ_DISABLE();
+    NRF_IRQ_DISABLE();
 
     FLAG_CLR(port->flags, WLS_FLAG_PKT_LOADED|WLS_FLAG_PKT_TX|WLS_FLAG_PKT_ACK);
 
@@ -534,7 +534,7 @@ void wls_set_remote_addr(wls_t *wls, wls_addr_t addr)
 
     hal_nrf_set_address(HAL_NRF_TX, addr);
 
-    NRF24_IRQ_ENABLE();
+    NRF_IRQ_ENABLE();
 
     memcpy(wls->port.target_addr, addr, sizeof(wls_addr_t));
 }
