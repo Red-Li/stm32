@@ -308,7 +308,6 @@ static int wls_send_active_packet(wls_t *wls)
     //
     hal_nrf_set_address(HAL_NRF_PIPE0, port->local_addr);
     
-    wls_packet_t *pkt = &port->active_packet;
     //
     if(status & 0x20){ //Send succ
         wls->count_send += port->active_packet_size;
@@ -390,10 +389,11 @@ retry:
 done:
     WLS_RX_MODE();
 
+#if 0 //Will cause packet lose
     NRF24_IRQ_DISABLE();
     wls_load_packet_to_ack_fifo(wls);
     NRF24_IRQ_ENABLE();
-
+#endif
     return -!(ret > 0);
 }
 

@@ -24,7 +24,6 @@
 typedef struct ds_s{
     USART_InitTypeDef uart_init_struct;
     USART_TypeDef *uart;
-    uint16_t baudrate;
     IRQn_Type   irq;
 
     DMA_InitTypeDef dma_init_struct;

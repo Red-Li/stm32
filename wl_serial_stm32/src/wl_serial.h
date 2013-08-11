@@ -33,16 +33,19 @@
 
 #define WLS_RX_MODE()\
     if(hal_nrf_get_operation_mode() != HAL_NRF_PRX){\
+        CE_LOW();\
+        hal_nrf_set_operation_mode(HAL_NRF_PRX);\
+        hal_nrf_clear_irq_flag(HAL_NRF_RX_DR);\
         hal_nrf_flush_rx();\
-            hal_nrf_set_operation_mode(HAL_NRF_PRX);\
-            CE_HIGH();\
+        CE_HIGH();\
     }
 
 #define WLS_TX_MODE()\
     if(hal_nrf_get_operation_mode() != HAL_NRF_PTX){\
         CE_LOW();\
-        hal_nrf_flush_tx();\
         hal_nrf_set_operation_mode(HAL_NRF_PTX);\
+        hal_nrf_clear_irq_flag(HAL_NRF_TX_DS|HAL_NRF_MAX_RT);\
+        hal_nrf_flush_tx();\
     }
 
 typedef uint8_t wls_counter_t;
