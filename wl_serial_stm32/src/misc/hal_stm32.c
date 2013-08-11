@@ -24,14 +24,14 @@ static void NVIC_Configration(void)
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); 
 
     //DMA for uart
-    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel4_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel2_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
 
     //uart RX irq
-    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
@@ -57,7 +57,7 @@ static void NVIC_Configration(void)
 
 static void USART_Configration(void)
 {
-    //USART1
+    //HAL_DEBUG_UART
     USART_InitTypeDef USART_InitStructure;
     USART_InitStructure.USART_BaudRate = HAL_DEFAULT_UART_BAUD;
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;
@@ -66,22 +66,22 @@ static void USART_Configration(void)
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
     /* USART configuration */
-    USART_Init(USART1, &USART_InitStructure);
+    USART_Init(HAL_DEBUG_UART, &USART_InitStructure);
     /* Enable USART */
-    USART_Cmd(USART1, ENABLE);
+    USART_Cmd(HAL_DEBUG_UART, ENABLE);
 
 }
 
 static void RCC_Configuration(void)
 {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB , ENABLE);
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
 
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);//DMA1
 
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC , ENABLE);
 }
@@ -91,15 +91,15 @@ static void GPIO_Configuration(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    /* Configure USART Tx as push-pull */
+    /* Configure USART3 Tx as push-pull */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-    /* Configure USART Rx as input floating */
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    /* Configure USART3 Rx as input floating */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
     
     /* Configure SPI2 */
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;

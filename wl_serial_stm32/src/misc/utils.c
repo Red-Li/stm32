@@ -28,7 +28,7 @@ void global_init(void)
     hal_init();
 
     //Using RAW USART putc()
-    init_printf((void*)USART1, raw_print_func);
+    init_printf((void*)HAL_DEBUG_UART, raw_print_func);
 }
 
 

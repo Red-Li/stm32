@@ -4,6 +4,7 @@
  * @author Red Li
  * @version 
  * @date 2013-08-01
+ *
  */
 
 
@@ -124,21 +125,21 @@ void ds_uart_dma_interrupt_handler()
 {
     ASSERT(DS->dma->CPAR == (uint32_t)(&DS->uart->DR));
 
-    if(DMA_GetITStatus(DMA1_IT_TE4)){ //Error
+    if(DMA_GetITStatus(DMA1_IT_TE2)){ //Error
         DS->count_send_fail += DS->dma_init_struct.DMA_BufferSize;
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
         ds_tx_dma_start(DS);
 
-        DMA_ClearITPendingBit(DMA1_IT_TE4);
+        DMA_ClearITPendingBit(DMA1_IT_TE2);
     }
-    else if(DMA_GetITStatus(DMA1_IT_TC4)){
+    else if(DMA_GetITStatus(DMA1_IT_TC2)){
         DS->count_send += DS->dma_init_struct.DMA_BufferSize;
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
         ds_tx_dma_start(DS);
 
-        DMA_ClearITPendingBit(DMA1_IT_TC4);
+        DMA_ClearITPendingBit(DMA1_IT_TC2);
     }
     else{
         ASSERT(0);
@@ -167,11 +168,11 @@ void ds_uart_interrupt_handler()
 
 
 ds_t g_ds = {
-    .uart = USART1,
-    .irq = USART1_IRQn,
+    .uart = USART3,
+    .irq = USART3_IRQn,
 
-    .dma = DMA1_Channel4,
-    .dma_irq = DMA1_Channel4_IRQn,
+    .dma = DMA1_Channel2,
+    .dma_irq = DMA1_Channel2_IRQn,
 
     .flags = 0,
 
