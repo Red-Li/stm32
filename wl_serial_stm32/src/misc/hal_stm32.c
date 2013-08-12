@@ -25,7 +25,7 @@ static void NVIC_Configration(void)
 
     //DMA for uart
     NVIC_InitStructure.NVIC_IRQChannel = HAL_DS_UART_DMA_IRQ_CHN;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x3;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);
@@ -39,7 +39,7 @@ static void NVIC_Configration(void)
 
     //NRF RX interrupt
     NVIC_InitStructure.NVIC_IRQChannel = HAL_NRF_IRQ_CHN;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x2;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;
     NVIC_Init(&NVIC_InitStructure);

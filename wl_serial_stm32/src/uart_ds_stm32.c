@@ -82,9 +82,7 @@ int ds_send(ds_t *ds, uint8_t *data, uint8_t len)
 {
     int n = CBUFFER_WRITE(&ds->tx_cb, data, len);
     
-    disable_irq(ds->dma_irq); //Is it necessary?
     ds_tx_dma_start(ds);
-    enable_irq(ds->dma_irq);
     
     return n;
 }
@@ -134,18 +132,19 @@ void ds_uart_dma_interrupt_handler()
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
 
+        DMA_ClearITPendingBit(HAL_DS_UART_DMA_TE);
+
         ds_tx_dma_start(DS);
 
-        DMA_ClearITPendingBit(HAL_DS_UART_DMA_TE);
     }
     else if(DMA_GetITStatus(HAL_DS_UART_DMA_TC)){
         DS->count_send += DS->dma_init_struct.DMA_BufferSize;
         CBUFFER_FREE(&DS->tx_cb, DS->dma_init_struct.DMA_BufferSize);
         FLAG_CLR(DS->flags, DS_FLAG_TX_DMA);
 
-        ds_tx_dma_start(DS);
-
         DMA_ClearITPendingBit(HAL_DS_UART_DMA_TC);
+
+        ds_tx_dma_start(DS);
     }
     else{
         ASSERT(0);
