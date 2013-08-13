@@ -26,6 +26,8 @@
 
 #define WL_GPIO_MASK 0x1000
 
+#define SETTING_SIZE() (sizeof(settings_t) - 8)
+
 typedef struct settings_s{
     uint32_t tag; //to verify the data in eeprom is valid or not
     uint32_t baudrate;

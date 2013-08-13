@@ -11,6 +11,7 @@
 #include "uart_ds_stm32.h"
 
 #define SETTING_TAG 0xFEEFABBA
+#define SETTING_ADDR (0x8000000 + 0xFC00) //63k
 
 settings_t g_settings = {
     .tag = SETTING_TAG,
@@ -49,16 +50,15 @@ settings_t g_settings = {
 
 int settings_load(settings_t *st)
 {
-#if 0
+    settings_t *ori = (settings_t*)SETTING_ADDR;
     //Check the data is correct or not
-    if(__settings.tag != SETTING_TAG){
+    if(ori->tag != SETTING_TAG){
         st->save_flag = 0xffffffff; //mark to save all settings
         settings_save(st);
     }
     else{
-        SETTING_CP(st, &__settings);
+        memcpy(st, ori, SETTING_SIZE());
     }
-#endif
     return 0;
 }
 
@@ -103,38 +103,29 @@ int settings_commit(settings_t *st)
 
 int settings_save(settings_t *st)
 {
-#if 0
-    FLASH_Unlock(FLASH_MEMTYPE_DATA);
-    if(__settings.tag != st->tag)
-        __settings.tag = st->tag;
-    
-    if(st->save_flag & WL_BAUD_MASK)
-        __settings.baudrate = st->baudrate;
-    
-    if(st->save_flag & WL_NRF_CHN_MASK)
-        __settings.nrf_chn = st->nrf_chn;
+    if(st->save_flag){
+        uint16_t ssize = SETTING_SIZE() / 2; //dirty_flag and save_flag
+        uint16_t i;
+        uint16_t *data = (uint16_t*)st,
+                 *dst = (uint16_t*)SETTING_ADDR;
 
-    if(st->save_flag & WL_NRF_SPEED_MASK)
-        __settings.nrf_speed = st->nrf_speed;
+retry:
+        FLASH_Unlock();
 
-    if(st->save_flag & WL_LOCAL_ADDR_MASK){
-        __settings.local_addr[0] = st->local_addr[0];
-        __settings.local_addr[1] = st->local_addr[1];
-        __settings.local_addr[2] = st->local_addr[2];
-        __settings.local_addr[3] = st->local_addr[3];
-        __settings.local_addr[4] = st->local_addr[4];
+        FLASH_ClearFlag(FLASH_FLAG_EOP|FLASH_FLAG_PGERR|FLASH_FLAG_WRPRTERR);
+        FLASH_ErasePage(SETTING_ADDR);
+        //program
+        for(i = 0; i < ssize; ++i)
+            FLASH_ProgramHalfWord(SETTING_ADDR + i * 2, data[i]);
+
+        FLASH_Unlock();
+
+        //verify
+        for(i = 0; i < ssize; ++i)
+            if(dst[i] != data[i])
+                goto retry;
+
     }
-
-    if(st->save_flag & WL_REMOTE_ADDR_MASK){
-        __settings.remote_addr[0] = st->remote_addr[0];
-        __settings.remote_addr[1] = st->remote_addr[1];
-        __settings.remote_addr[2] = st->remote_addr[2];
-        __settings.remote_addr[3] = st->remote_addr[3];
-        __settings.remote_addr[4] = st->remote_addr[4];
-    }
-
-    FLASH_Lock(FLASH_MEMTYPE_DATA);
-#endif
     st->save_flag = 0x0;
 
     return 0;

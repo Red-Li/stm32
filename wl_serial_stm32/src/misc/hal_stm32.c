@@ -266,6 +266,9 @@ void hal_init(void)
 
 }
 
+
+
+
 void udelay(uint32_t us)
 {
     hal_time_t now = hal_time();
