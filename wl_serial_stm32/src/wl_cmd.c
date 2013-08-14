@@ -339,7 +339,7 @@ static int wl_cmd_handle_get_stats(uint8_t *cmd)
 
 static int wl_cmd_handle_reset(uint8_t *cmd)
 {
-    //WWDG_SWReset();
+    hal_soft_reset();
     while(1);
 
     return 0;

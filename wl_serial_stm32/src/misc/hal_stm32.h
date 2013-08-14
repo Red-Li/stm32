@@ -128,6 +128,7 @@ hal_time_t hal_time(); //return us
 void hal_srand(uint32_t seed);
 uint32_t hal_rand();
 
+#define hal_soft_reset() NVIC_SystemReset()
 
 //return t1 - t0
 #define hal_time_diff(t0, t1) ((t1) - (t0))

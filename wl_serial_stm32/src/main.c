@@ -136,13 +136,12 @@ void management_detect()
         ds_set_baudrate(DS, 9600);
 
         s_management_mode = 1;
-#if 0
+
         //Check if it is reset by command
-        if(RST_GetFlagStatus(RST_FLAG_WWDGF) == SET){
-            ds_handle_data(DS, "OK", 2);
-            RST_ClearFlag(RST_FLAG_WWDGF);
+        if(RCC_GetFlagStatus(RCC_FLAG_SFTRST) == SET){
+            ds_send(DS, (uint8_t*)"OK", 2);
+            RCC_ClearFlag();
         }
-#endif
     }
     else{
         wl_cmd_set_handle_return(NULL, NULL);
@@ -241,8 +240,6 @@ int main(void)
     //Start handle packet
     wls_start(WLS);
     
-
-    DBG("-->");
     main_loop();
 
     while(1);
