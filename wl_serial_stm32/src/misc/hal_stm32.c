@@ -176,11 +176,13 @@ static void GPIO_Configuration(void)
 
 hal_time_t hal_time()
 {
+    hal_time_t t0 = __hal_time;
     uint32_t elapse = systick_counter() - systick_current();
-    hal_time_t t0;
-    do{
+
+    while(t0 != __hal_time){
         t0 = __hal_time;
-    }while(t0 != __hal_time); //Trick
+        elapse = systick_counter() - systick_current();
+    } //Trick
 
     return t0 + elapse / (sysclk_freq() / 1000000); 
 }
