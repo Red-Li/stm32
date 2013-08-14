@@ -11,7 +11,7 @@
 #include "uart_ds_stm32.h"
 
 #define SETTING_TAG 0xFEEFABBA
-#define SETTING_ADDR (0x8000000 + 0xFC00) //63k
+#define SETTING_ADDR (0x8000000 + HAL_FLASH_SIZE - 1024) //
 
 settings_t g_settings = {
     .tag = SETTING_TAG,

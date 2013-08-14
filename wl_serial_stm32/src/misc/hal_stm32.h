@@ -23,7 +23,7 @@
 #if defined(HAL_BOARD_DOFLY)
 //UART
 #define HAL_DEBUG_UART                          USART3
-#define HAL_DEFAULT_UART_BAUD                   38400
+#define HAL_DEFAULT_UART_BAUD                   115200
 
 #define HAL_DS_UART_GPIO                        GPIOB
 #define HAL_DS_UART_RX_PIN                      GPIO_Pin_11
@@ -64,7 +64,7 @@
 #elif defined(HAL_BOARD_OURSTM)
 //UART
 #define HAL_DEBUG_UART                          USART1
-#define HAL_DEFAULT_UART_BAUD                   38400
+#define HAL_DEFAULT_UART_BAUD                   115200
 
 #define HAL_DS_UART_GPIO                        GPIOA
 #define HAL_DS_UART_RX_PIN                      GPIO_Pin_10
@@ -108,7 +108,7 @@
 
 
 
-
+#define HAL_FLASH_SIZE 0x10000
 
 
 
