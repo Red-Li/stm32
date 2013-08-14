@@ -171,7 +171,12 @@ void mdelay(uint32_t ms);
 #define msleep mdelay
 
 /******************************* Hardward device ********************/
-#define HAL_NUM_PWM 4
-#define HAL_NUM_GPIO 4
+#define HAL_PIN_TOTAL 0x8
+void hal_pin_mode_change(uint8_t which, uint8_t mode_from, uint8_t mode_to);
+void hal_gpio_set(uint8_t which, uint8_t enable);
+void hal_pwm_set_duty_cycle(uint8_t which, uint8_t cycle_duty);
+
+#define HAL_PWM_TOTAL 4
+#define HAL_GPIO_TOTAL 4
 
 #endif

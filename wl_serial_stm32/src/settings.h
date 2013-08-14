@@ -26,6 +26,16 @@
 
 #define WL_GPIO_MASK 0x1000
 
+#define WL_PIN0_MASK 0x10000
+#define WL_PIN1_MASK 0x20000
+#define WL_PIN2_MASK 0x40000
+#define WL_PIN3_MASK 0x80000
+#define WL_PIN4_MASK 0x100000
+#define WL_PIN5_MASK 0x200000
+#define WL_PIN6_MASK 0x400000
+#define WL_PIN7_MASK 0x800000
+
+
 #define SETTING_SIZE() (sizeof(settings_t) - 8)
 
 typedef struct settings_s{
@@ -37,8 +47,10 @@ typedef struct settings_s{
     wls_addr_t wls_local_addr;
     wls_addr_t wls_remote_addr;
 
-    uint8_t pwm_duty_cycle[HAL_NUM_PWM]; //0 - 10
+    uint8_t pwm_duty_cycle[HAL_PWM_TOTAL]; //0 - 100
     uint8_t gpio_state; //maximum 8 GPIOs
+
+    uint32_t pin_mode;
 
     uint32_t dirty_flag;
     uint32_t save_flag;

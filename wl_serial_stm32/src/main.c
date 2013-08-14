@@ -130,6 +130,7 @@ void management_detect()
     if(MANAGEMENT_SELECTED()){
         wl_cmd_set_handle_return((wl_cmd_callback_t)ds_send, DS);
         wl_cmd_reset();
+
         //Mark baud rate changed
         settings->dirty_flag |= WL_BAUD_MASK;
         ds_set_baudrate(DS, 9600);
@@ -241,6 +242,7 @@ int main(void)
     wls_start(WLS);
     
 
+    DBG("-->");
     main_loop();
 
     while(1);

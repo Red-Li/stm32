@@ -281,6 +281,216 @@ void mdelay(uint32_t ms)
     while(hal_time() < now + 1000UL * ms);
 }
 
+//
+//
+static void hal_pin_management_enable(void *data)
+{
+    //GPIO config
+    GPIO_InitTypeDef GPIO_InitStructure;
+    //Configure management IRQ 
+    GPIO_InitStructure.GPIO_Pin = HAL_MANAGEMENT_PIN;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(HAL_MANAGEMENT_GPIO, &GPIO_InitStructure);
+    //Enable extern interrupt
+    GPIO_EXTILineConfig(HAL_MANAGEMENT_EXTI_PORT, HAL_MANAGEMENT_EXTI_PORT_SOURCE); //interrupt 0 
+    
+    //EXTI config
+    EXTI_InitTypeDef EXTI_InitStruct;
+    EXTI_InitStruct.EXTI_Line = HAL_MANAGEMENT_EXTI_LINE;
+    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStruct);
+}
+
+static void hal_pin_management_disable(void *data)
+{
+    //EXTI config
+    EXTI_InitTypeDef EXTI_InitStruct;
+    EXTI_InitStruct.EXTI_Line = HAL_MANAGEMENT_EXTI_LINE;
+    EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStruct.EXTI_LineCmd = DISABLE;
+    EXTI_Init(&EXTI_InitStruct);
+}
 
 
+static void hal_pin_pwm_enable(void *data)
+{
 
+}
+
+static void hal_pin_pwm_disable(void *data)
+{
+}
+
+static void hal_pin_gpio_enable(void *data)
+{
+    uint8_t idx = (uint8_t)(data - (void*)0);
+    GPIO_TypeDef *gpio = NULL;
+    uint16_t pin = 0;
+
+    if(idx < 2){
+        gpio = GPIOA;
+        pin = idx == 0 ? GPIO_Pin_4 : GPIO_Pin_5;
+    }
+    else if(idx < 4){
+        gpio = GPIOB;
+        pin = idx == 3 ? GPIO_Pin_10 : GPIO_Pin_11;
+    }
+    //else
+    //  ASSERT(0);
+    
+    if(gpio){
+        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+        GPIO_InitStructure.GPIO_Pin = pin;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_Init(gpio, &GPIO_InitStructure);
+    }
+
+}
+
+static void hal_pin_gpio_disable(void *data)
+{
+}
+
+static void hal_pin_uart_tx_enable(void *data)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    /* Configure USART3 Tx as push-pull */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Pin = HAL_DS_UART_TX_PIN;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(HAL_DS_UART_GPIO, &GPIO_InitStructure);
+
+    //Enable Tx
+    HAL_DS_UART->CR1 |= USART_Mode_Tx;
+}
+
+static void hal_pin_uart_tx_disable(void *data)
+{
+    //Disable Tx
+    HAL_DS_UART->CR1 &= ~USART_Mode_Tx;
+}
+
+static void hal_pin_uart_rx_enable(void *data)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    /* Configure USART3 Rx as input floating */
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_InitStructure.GPIO_Pin = HAL_DS_UART_RX_PIN;
+    GPIO_Init(HAL_DS_UART_GPIO, &GPIO_InitStructure);
+
+    //Enable Rx
+    HAL_DS_UART->CR1 |= USART_Mode_Rx;
+}
+
+static void hal_pin_uart_rx_disable(void *data)
+{
+    //Enable Tx
+    HAL_DS_UART->CR1 &= ~USART_Mode_Rx;
+}
+
+typedef void (*hal_pin_mode_cb_t)(void*);
+
+typedef struct hal_pin_mode_op_s{
+    hal_pin_mode_cb_t enable;
+    void              *enable_data;
+    hal_pin_mode_cb_t disable;
+    void              *disable_data;
+}hal_pin_mode_op_t;
+
+
+const static hal_pin_mode_op_t __hal_mode_op_map[HAL_PIN_TOTAL][4] = {
+    { //PIN0
+        {hal_pin_management_enable, NULL, hal_pin_management_disable, NULL},
+        {hal_pin_pwm_enable, (void*)0, hal_pin_pwm_disable, (void*)0},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin1
+        {hal_pin_pwm_enable, (void*)1, hal_pin_pwm_disable, (void*)1},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin2
+        {hal_pin_gpio_enable, (void*)0, hal_pin_gpio_disable, (void*)0},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin3
+        {hal_pin_gpio_enable, (void*)1, hal_pin_gpio_disable, (void*)1},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin4
+        {hal_pin_pwm_enable, (void*)2, hal_pin_pwm_disable, (void*)2},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin5
+        {hal_pin_pwm_enable, (void*)3, hal_pin_pwm_disable, (void*)3},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin6
+        {hal_pin_uart_tx_enable, NULL, hal_pin_uart_tx_disable, NULL},
+        {hal_pin_gpio_enable, (void*)2, hal_pin_gpio_disable, (void*)2},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+    { //Pin7
+        {hal_pin_uart_rx_enable, NULL, hal_pin_uart_rx_disable, NULL},
+        {hal_pin_gpio_enable, (void*)3, hal_pin_gpio_disable, (void*)3},
+        {NULL, NULL, NULL, NULL},
+        {NULL, NULL, NULL, NULL}
+    },
+};
+
+
+void hal_pin_mode_change(uint8_t which, uint8_t mode_from, uint8_t mode_to)
+{
+    //ASSERT
+    while(which >= HAL_PIN_TOTAL || mode_from >= 4 || mode_to >= 4);
+    
+    hal_pin_mode_op_t *op = (hal_pin_mode_op_t*)&__hal_mode_op_map[which];
+
+    if(op[mode_from].disable)
+        op[mode_from].disable(op[mode_from].disable_data);
+    
+    if(op[mode_to].enable)
+        op[mode_to].enable(op[mode_to].enable_data);
+
+}
+
+void hal_gpio_set(uint8_t which, uint8_t enable)
+{
+    GPIO_TypeDef *gpio = NULL;
+    uint16_t pin = 0;
+
+    if(which < 2){
+        gpio = GPIOA;
+        pin = which == 0 ? GPIO_Pin_4 : GPIO_Pin_5;
+    }
+    else if(which < 4){
+        gpio = GPIOB;
+        pin = which == 3 ? GPIO_Pin_10 : GPIO_Pin_11;
+    }
+    //else
+    //  ASSERT(0);
+    if(gpio)
+        GPIO_WriteBit(gpio, pin, enable);
+}
+
+void hal_pwm_set_duty_cycle(uint8_t which, uint8_t cycle_duty)
+{
+}

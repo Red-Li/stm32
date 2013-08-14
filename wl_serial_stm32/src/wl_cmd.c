@@ -37,6 +37,9 @@ enum{
     WL_CMD_OP_SET_GPIO_STATE = 0xa,
     WL_CMD_OP_GET_GPIO_STATE = 0xb,
 
+    WL_CMD_OP_SET_PIN_MODE = 0x10,
+    WL_CMD_OP_GET_PIN_MODE = 0x11,
+
     WL_CMD_OP_GET_STATS = 0x31,
 
     WL_CMD_OP_RESET = 0x3F
@@ -74,12 +77,14 @@ static int wl_cmd_handle_opcode(uint8_t op)
         case WL_CMD_OP_SET_GPIO_STATE: //[idx, state]
         case WL_CMD_OP_SET_PWM_DUTY_CYCLE: //[idx, duty_cycle]
         case WL_CMD_OP_SET_RF: //[rf_chn, rf_speed]
+        case WL_CMD_OP_SET_PIN_MODE: //[which, mode]
             return 2;
         
         case WL_CMD_OP_GET_GPIO_STATE: //[idx]
         case WL_CMD_OP_GET_PWM_DUTY_CYCLE: //[idx]
         case WL_CMD_OP_SET_UART: //[baudrate]
         case WL_CMD_OP_GET_STATS: //[idx]
+        case WL_CMD_OP_GET_PIN_MODE: //[which]
             return 1;
 
         case WL_CMD_OP_SET_REMOTE_ADDR:
@@ -208,7 +213,7 @@ static int wl_cmd_handle_gpio_set(uint8_t *cmd)
 {
     uint8_t op = cmd[0] & 0x3f;
     uint8_t idx = cmd[1];
-    if(idx >= HAL_NUM_GPIO)
+    if(idx >= HAL_GPIO_TOTAL)
         return -1;
 
     if(op == WL_CMD_OP_SET_GPIO_STATE){
@@ -217,6 +222,10 @@ static int wl_cmd_handle_gpio_set(uint8_t *cmd)
         else
             settings->gpio_state &= ~(1 << idx);
         settings->dirty_flag |= WL_GPIO_MASK;
+        
+        if(cmd[0] & 0x80)
+            settings->save_flag |= WL_GPIO_MASK;
+
     }
     else{
         wl_cmd_result[0] = (settings->gpio_state >> idx) & 0x1;
@@ -227,26 +236,57 @@ static int wl_cmd_handle_gpio_set(uint8_t *cmd)
 
 }
 
+static int wl_cmd_handle_pin_mode(uint8_t *cmd)
+{
+    uint8_t op = cmd[0] & 0x3f;
+    uint8_t which = cmd[1];
+
+    if(which >= HAL_GPIO_TOTAL)
+        return -1;
+
+    if(op == WL_CMD_OP_SET_PIN_MODE){
+        uint8_t mode = cmd[2];
+        if(mode > 1)
+            return -1;
+        
+        BF_SET(settings->pin_mode, mode, which * 2, 2);
+        settings->dirty_flag = WL_PIN0_MASK << which;
+
+        if(cmd[0] & 0x80)
+            settings->save_flag |= WL_PIN0_MASK << which;
+    }
+    else{
+        wl_cmd_result[0] = BF_GET(settings->pin_mode, which * 2, 2);
+        wl_cmd_return = 1;
+    }
+
+    return 0;
+}
+
+
 static int wl_cmd_handle_pwm_duty_cycle(uint8_t *cmd)
 {
     uint8_t op = cmd[0] & 0x3f;
 
     if(op == WL_CMD_OP_SET_PWM_DUTY_CYCLE){
         uint8_t idx = cmd[1];
-        uint32_t flags[HAL_NUM_PWM] = {
+        uint32_t flags[HAL_PWM_TOTAL] = {
                     WL_PWM0_MASK,
                     WL_PWM1_MASK,
                     WL_PWM2_MASK,
                     WL_PWM3_MASK};
 
-        if(cmd[2] > 100 || idx >= HAL_NUM_PWM)
+        if(cmd[2] > 100 || idx >= HAL_PWM_TOTAL)
             return -1;
         settings->pwm_duty_cycle[idx] = cmd[2];
         settings->dirty_flag |= flags[idx];
+
+        if(cmd[0] & 0x80)
+            settings->save_flag |= flags[idx];
     }
     else{
         uint8_t idx = cmd[1]; 
-        if(idx >= HAL_NUM_PWM)
+        if(idx >= HAL_PWM_TOTAL)
             return -1;
         wl_cmd_result[0] = settings->pwm_duty_cycle[idx];
         wl_cmd_return = 1;
@@ -348,6 +388,11 @@ static int wl_cmd_handle_local_cmd(uint8_t *cmd, uint8_t len)
         case WL_CMD_OP_SET_GPIO_STATE:
         case WL_CMD_OP_GET_GPIO_STATE:
             ret = wl_cmd_handle_gpio_set(cmd + 2);
+            break;
+
+        case WL_CMD_OP_SET_PIN_MODE:
+        case WL_CMD_OP_GET_PIN_MODE:
+            ret = wl_cmd_handle_pin_mode(cmd + 2);
             break;
 
         case WL_CMD_OP_GET_STATS:

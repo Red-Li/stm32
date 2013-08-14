@@ -97,6 +97,16 @@ if __name__ == "__main__":
             type = int,
             help = "Get GPIO state")
 
+    parser.add_argument('--set-pin-mode', dest = 'set_pin_mode',
+            nargs = 2,
+            type = int,
+            help = "Set pin mode state, idx = [0 - 7], mode = [0, 1]")
+
+    parser.add_argument('--get-pin-mode', dest = 'get_pin_mode',
+            nargs = 1,
+            type = int,
+            help = "Get PIN Mode")
+
     args = parser.parse_args()
 
     s2addr = lambda s: [int(ss, 16) for ss in s.split(":")]
@@ -246,3 +256,23 @@ if __name__ == "__main__":
         f = lambda d: d[0:2] + " State: %d" % ord(d[2])
         check_result2("Get GPIO%d state " % (idx), f)
 
+    if args.set_pin_mode:
+        idx = args.set_pin_mode[0]
+        if args.set_pin_mode[1]:
+            state = 1
+        else:
+            state = 0
+        if idx >= 4:
+            print_usage(parser, "PIN idx error")
+
+        ps.write(t([0xaf, 0xfa, op(0x10), idx, state]))
+        check_result("Set PIN%d  to %d" % (idx, state))
+
+    if args.get_pin_mode:
+        idx = args.get_pin_mode[0]
+        if idx >= 4:
+            print_usage(parser, "PIN idx error")
+
+        ps.write(t([0xaf, 0xfa, op(0xb), idx]))
+        f = lambda d: d[0:2] + " State: %d" % ord(d[2])
+        check_result2("Get PIN%d state " % (idx), f)

@@ -25,6 +25,8 @@ settings_t g_settings = {
     .pwm_duty_cycle = {0, 0, 0, 0},
     .gpio_state = 0,
 
+    .pin_mode = 0x0, //every ping have 2bits, 0 is the default mode
+
     .dirty_flag = 0x0,
     .save_flag = 0x0
 };
@@ -63,8 +65,13 @@ int settings_load(settings_t *st)
 }
 
 
+#define PIN_MODE_CHANGE(pin, st)\
+    hal_pin_mode_change((pin), !BF_GET((st)->pin_mode, (pin) * 2, 2), BF_GET((st)->pin_mode, (pin) * 2, 2))
+
 int settings_commit(settings_t *st)
 {
+    local_irq_disable();
+
     if(st->dirty_flag & WL_BAUD_MASK)
         ds_set_baudrate(DS, st->baudrate);
 
@@ -76,7 +83,31 @@ int settings_commit(settings_t *st)
 
     if(st->dirty_flag & WL_REMOTE_ADDR_MASK)
         wls_set_remote_addr(WLS, st->wls_remote_addr);
-#if 0
+
+    if(st->dirty_flag & WL_PIN0_MASK)
+        PIN_MODE_CHANGE(0, st);
+
+    if(st->dirty_flag & WL_PIN1_MASK)
+        PIN_MODE_CHANGE(1, st);
+
+    if(st->dirty_flag & WL_PIN2_MASK)
+        PIN_MODE_CHANGE(2, st);
+
+    if(st->dirty_flag & WL_PIN3_MASK)
+        PIN_MODE_CHANGE(3, st);
+
+    if(st->dirty_flag & WL_PIN4_MASK)
+        PIN_MODE_CHANGE(4, st);
+
+    if(st->dirty_flag & WL_PIN5_MASK)
+        PIN_MODE_CHANGE(5, st);
+
+    if(st->dirty_flag & WL_PIN6_MASK)
+        PIN_MODE_CHANGE(6, st);
+
+    if(st->dirty_flag & WL_PIN7_MASK)
+        PIN_MODE_CHANGE(7, st);
+
     if(st->dirty_flag & WL_PWM0_MASK)
         hal_pwm_set_duty_cycle(0, st->pwm_duty_cycle[0]);
 
@@ -89,14 +120,15 @@ int settings_commit(settings_t *st)
     if(st->dirty_flag & WL_PWM3_MASK)
         hal_pwm_set_duty_cycle(3, st->pwm_duty_cycle[3]);
     
+
     if(st->dirty_flag & WL_GPIO_MASK){
         uint8_t i;
-        for(i = 0; i < WL_NUM_GPIO; i++)
+        for(i = 0; i < HAL_GPIO_TOTAL; i++)
             hal_gpio_set(i, (st->gpio_state >> i) & 0x1);
     }
-#endif
     st->dirty_flag = 0x0;
 
+    local_irq_enable();
     return 0;
 }
 
